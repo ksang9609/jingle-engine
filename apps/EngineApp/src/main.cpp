@@ -26,7 +26,65 @@ struct FVector
 {
 	float x, y, z;
 	FVector(float _x = 0, float _y = 0, float _z = 0) : x(_x), y(_y), z(_z) {}
+
+	float LengthSquared() const
+	{
+		return x * x + y * y + z * z;
+	}
+
+	float Length() const
+	{
+		return sqrt(x * x + y * y + z * z);
+	}
+
+	FVector operator+(const FVector& v) const
+	{
+		return {
+			x + v.x,
+			y + v.y,
+			z + v.z
+		};
+	}
+
+	FVector operator-(const FVector& v) const
+	{
+		return {
+			x - v.x,
+			y - v.y,
+			z - v.z
+		};
+	}
+
+	FVector operator*(const float& f) const
+	{
+		return { x * f, y * f, z * f };
+	}
+
+	FVector operator/(const float& f) const
+	{
+		return { x / f, y / f, z / f };
+	}
+
+	FVector Normalized() const
+	{
+		return *this / Length();
+	}
+
+	float dot(const FVector& v) const
+	{
+		return x * v.x + y * v.y + z * v.z;
+	}
+
+	static float dot(const FVector& vA, const FVector& vB)
+	{
+		return vA.x * vB.x + vA.y * vB.y + vA.z * vB.z;
+	}
 };
+
+static FVector operator*(const float& f, const FVector& v)
+{
+	return { v.x * f, v.y * f, v.z * f };
+}
 
 #include "Sphere.h"
 
@@ -88,6 +146,8 @@ FVertexSimple cube_vertices[] =
 	{  0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.5f, 1.0f }, // Bottom-right (purple)
 };
 
+
+
 class URenderer
 {
 public:
@@ -114,8 +174,10 @@ public:
 	// Constant buffer
 	struct FConstants
 	{
-		FVector Offset;
-		float Pad;
+		FVector Location;
+		float Pad0;
+		FVector Scale;
+		float Pad1;
 	};
 
 public:
@@ -226,11 +288,11 @@ public:
 		ID3DBlob* vertexshaderCSO;
 		ID3DBlob* pixelshaderCSO;
 
-		D3DCompileFromFile(L"ShaderW0.hlsl", nullptr, nullptr, "mainVS", "vs_5_0", 0, 0, &vertexshaderCSO, nullptr);
-		
+		D3DCompileFromFile(L"resources/Shaders/ShaderW0.hlsl", nullptr, nullptr, "mainVS", "vs_5_0", 0, 0, &vertexshaderCSO, nullptr);
+
 		Device->CreateVertexShader(vertexshaderCSO->GetBufferPointer(), vertexshaderCSO->GetBufferSize(), nullptr, &SimpleVertexShader);
 
-		D3DCompileFromFile(L"ShaderW0.hlsl", nullptr, nullptr, "mainPS", "ps_5_0", 0, 0, &pixelshaderCSO, nullptr);
+		D3DCompileFromFile(L"resources/Shaders/ShaderW0.hlsl", nullptr, nullptr, "mainPS", "ps_5_0", 0, 0, &pixelshaderCSO, nullptr);
 
 		Device->CreatePixelShader(pixelshaderCSO->GetBufferPointer(), pixelshaderCSO->GetBufferSize(), nullptr, &SimplePixelShader);
 
@@ -312,7 +374,7 @@ public:
 
 	void Release()
 	{
-		RasterizerState->Release();
+		ReleaseRasterizerState();
 
 		DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
 
@@ -335,7 +397,7 @@ public:
 		DeviceContext->RSSetState(RasterizerState);
 
 		DeviceContext->OMSetRenderTargets(1, &FrameBufferRTV, nullptr);
-		DeviceContext->OMSetBlendState(nullptr, nullptr, 0xfffffff);
+		DeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 	}
 
 	void PrepareShader()
@@ -358,7 +420,7 @@ public:
 		DeviceContext->Draw(numVertices, 0);
 	}
 
-	void UpdateConstant(FVector Offset)
+	void UpdateConstant(FVector location, FVector scale)
 	{
 		if (ConstantBuffer)
 		{
@@ -366,10 +428,488 @@ public:
 
 			DeviceContext->Map(ConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &constantbufferMSR); // update constant buffer every frame
 			FConstants* constants = (FConstants*)constantbufferMSR.pData;
-			{
-				constants->Offset = Offset;
-			}
+
+			constants->Location = location;
+			constants->Scale = scale;
+
 			DeviceContext->Unmap(ConstantBuffer, 0);
+		}
+	}
+};
+
+class UPrimitive
+{
+public:
+	virtual ~UPrimitive() = default;
+	virtual void Update(float deltaTime) = 0;
+	virtual void Render(URenderer& renderer) = 0;
+	virtual bool Intersects(UPrimitive* other) = 0;
+	//virtual void Translate(const FVector& v) = 0;
+	virtual void AddGravity(float deltaTime) = 0;
+};
+
+// Border
+const float LeftBorder = -1.0f;
+const float RightBorder = 1.0f;
+const float TopBorder = -1.0f;
+const float BottomBorder = 1.0f;
+
+// Gravity
+const FVector Gravity = FVector{ 0.0f, -9.8f, 0.0f };
+
+class UBall : public UPrimitive
+{
+public:
+	FVector Location;
+	FVector Velocity;
+	float Radius;
+	float Mass;
+	static int TotalNumBalls;
+
+	ID3D11Buffer* VertexBuffer;
+	UINT NumVertices;
+
+	UBall(ID3D11Buffer* pBuffer, UINT numVertices)
+	{
+		// Set random Radius (0.05f to 0.2f)
+		Radius = static_cast<float>(rand()) / RAND_MAX * 0.15f + 0.05f;
+
+		Mass = pow(Radius, 3);
+
+		// Set random Location and Velocity
+		Location = {
+			(static_cast<float>(rand()) / RAND_MAX) * 2.0f - 1.0f, // -1.0f to 1.0f
+			(static_cast<float>(rand()) / RAND_MAX) * 2.0f - 1.0f, // -1.0f to 1.0f
+			0.0f
+		};
+		Velocity = {
+			(static_cast<float>(rand()) / RAND_MAX) * 2.0f - 1.0f, // -1.0f to 1.0f
+			(static_cast<float>(rand()) / RAND_MAX) * 2.0f - 1.0f, // -1.0f to 1.0f
+			0.0f
+		};
+
+		TotalNumBalls += 1;
+
+		VertexBuffer = pBuffer;
+		NumVertices = numVertices;
+	}
+
+	~UBall()
+	{
+		TotalNumBalls -= 1;
+	}
+
+	void Update(float deltaTime)
+	{
+		Location.x += Velocity.x * deltaTime;
+		Location.y += Velocity.y * deltaTime;
+		Location.z += Velocity.z * deltaTime;
+
+		BounceWall();
+	}
+
+	void Render(URenderer& renderer)
+	{
+		renderer.UpdateConstant(Location, FVector{ Radius, Radius, Radius });
+		renderer.RenderPrimitive(VertexBuffer, NumVertices);
+	}
+
+	bool Intersects(UPrimitive* other)
+	{
+		UBall* otherBall = dynamic_cast<UBall*>(other);
+		if (otherBall == nullptr)
+		{
+			return false;
+		}
+
+		FVector direction = otherBall->Location - Location;
+		float distance = direction.LengthSquared();
+		float combinedRadii = Radius + otherBall->Radius;
+
+		return distance <= combinedRadii * combinedRadii;
+	}
+
+	static void BounceBall(UBall& ballA, UBall& ballB)
+	{
+		// Position correction
+		FVector VecAB = ballB.Location - ballA.Location;
+		FVector DirAB = VecAB.Normalized();
+		float Penetration = ballA.Radius + ballB.Radius - VecAB.Length();
+
+		ballA.Location = ballA.Location - DirAB * Penetration * 0.5;
+		ballB.Location = ballB.Location + DirAB * Penetration * 0.5;
+
+		// Elastic collision
+		float m1 = ballA.Mass;
+		float m2 = ballB.Mass;
+		FVector v1 = ballA.Velocity;
+		FVector v2 = ballB.Velocity;
+		FVector x1 = ballA.Location;
+		FVector x2 = ballB.Location;
+
+		FVector newV1 = v1 - (2 * m2 / (m1 + m2)) *
+			FVector::dot(v1 - v2, x1 - x2) / (x1 - x2).LengthSquared() *
+			(x1 - x2);
+		FVector newV2 = v2 - (2 * m1 / (m1 + m2)) *
+			FVector::dot(v2 - v1, x2 - x1) / (x2 - x1).LengthSquared() *
+			(x2 - x1);
+
+		ballA.Velocity = newV1;
+		ballB.Velocity = newV2;
+	}
+
+	void BounceWall()
+	{
+		if (Location.x < LeftBorder + Radius)
+		{
+			Location.x = LeftBorder + Radius;
+			Velocity.x *= -1.0f;
+		}
+		if (Location.x > RightBorder - Radius)
+		{
+			Location.x = RightBorder - Radius;
+			Velocity.x *= -1.0f;
+		}
+		if (Location.y < TopBorder + Radius)
+		{
+			Location.y = TopBorder + Radius;
+			Velocity.y *= -1.0f;
+		}
+		if (Location.y > BottomBorder - Radius)
+		{
+			Location.y = BottomBorder - Radius;
+			Velocity.y *= -1.0f;
+		}
+	}
+
+	void AddGravity(float deltaTime)
+	{
+		Velocity = Velocity + Gravity * deltaTime;
+	}
+};
+
+int UBall::TotalNumBalls = 0;
+
+void InitPrimitiveList(
+	int initialCapacity,
+	UPrimitive**& primitiveList,
+	int& count,
+	int& capacity)
+{
+	capacity = initialCapacity > 0
+		? initialCapacity
+		: 4;
+	count = 0;
+	primitiveList = new UPrimitive * [capacity];
+	for (int i = 0; i < capacity; i++)
+	{
+		primitiveList[i] = nullptr;
+	}
+}
+
+void ResizePrimitiveList(
+	int newCapacity,
+	UPrimitive**& primitiveList,
+	int& count,
+	int& capacity)
+{
+	UPrimitive** newList = new UPrimitive * [newCapacity];
+	for (int i = 0; i < newCapacity; i++)
+	{
+		newList[i] = nullptr;
+	}
+
+	for (int i = 0; i < min(count, newCapacity); i++)
+	{
+		newList[i] = primitiveList[i];
+	}
+
+	delete[] primitiveList;
+	primitiveList = newList;
+	capacity = newCapacity;
+}
+
+void AddNewBall(
+	ID3D11Buffer* pBuffer,
+	UINT numVertices,
+	UPrimitive**& primitiveList,
+	int& count,
+	int& capacity)
+{
+	if (count >= capacity)
+	{
+		ResizePrimitiveList(capacity * 2, primitiveList, count, capacity);
+	}
+
+	primitiveList[count++] = new UBall(pBuffer, numVertices);
+}
+
+void RemoveRandomBall(
+	UPrimitive**& primitiveList,
+	int& count,
+	int& capacity)
+{
+	if (count == 0)
+	{
+		return;
+	}
+
+	int delIndex = rand() % count;
+
+	delete primitiveList[delIndex];
+
+	primitiveList[delIndex] = primitiveList[count - 1];
+	primitiveList[count - 1] = nullptr;
+	count--;
+}
+
+void ModifyNumOfBalls(
+	int newCount,
+	ID3D11Buffer* pBuffer,
+	UINT numVertices,
+	UPrimitive**& primitiveList,
+	int& count,
+	int& capacity)
+{
+	if (newCount == count || newCount < 1)
+	{
+		return;
+	}
+
+	if (newCount > count)
+	{
+		for (int i = 0; i < newCount - count; i++)
+		{
+			AddNewBall(
+				pBuffer,
+				numVertices,
+				primitiveList,
+				count,
+				capacity);
+		}
+		return;
+	}
+
+	// if new count < count
+	for (int i = 0; i < count - newCount; i++)
+	{
+		RemoveRandomBall(primitiveList, count, capacity);
+	}
+}
+
+void ReleasePrimitiveList(
+	UPrimitive**& primitiveList,
+	int& count,
+	int& capacity)
+{
+	for (int i = 0; i < count; i++)
+	{
+		delete primitiveList[i];
+	}
+
+	delete[] primitiveList;
+	primitiveList = nullptr;
+	count = 0;
+	capacity = 0;
+}
+
+void RenderAllBalls(
+	URenderer& renderer,
+	UPrimitive** const& primitiveList,
+	const int& count)
+{
+	for (int i = 0; i < count; i++)
+	{
+		primitiveList[i]->Render(renderer);
+	}
+}
+
+void UpdateAllBalls(
+	float deltaTime,
+	UPrimitive** const& primitiveList,
+	const int& count)
+{
+	for (int i = 0; i < count; i++)
+	{
+		primitiveList[i]->Update(deltaTime);
+	}
+}
+
+void ResolveAllBallCollisions(
+	UPrimitive** const& primitiveList,
+	const int& count)
+{
+	for (int i = 0; i < count; i++)
+	{
+		for (int j = i + 1; j < count; j++)
+		{
+			if (primitiveList[i]->Intersects(primitiveList[j]))
+			{
+				UBall* a = dynamic_cast<UBall*>(primitiveList[i]);
+				UBall* b = dynamic_cast<UBall*>(primitiveList[j]);
+
+				if (a && b)
+				{
+					UBall::BounceBall(*a, *b);
+				}
+			}
+		}
+	}
+}
+
+void AddAllBallGravity(
+	float deltaTime,
+	UPrimitive** const& primitiveList,
+	const int& count)
+{
+	for (int i = 0; i < count; i++)
+	{
+		primitiveList[i]->AddGravity(deltaTime);
+	}
+}
+
+class UBallSnapshot
+{
+public:
+	FVector Location;
+	float Radius;
+
+	ID3D11Buffer* VertexBuffer;
+	UINT NumVertices;
+
+	UBallSnapshot(
+		FVector location,
+		float radius,
+		ID3D11Buffer* pBuffer,
+		UINT numVertices)
+	{
+		Location = location;
+		Radius = radius;
+
+		VertexBuffer = pBuffer;
+		NumVertices = numVertices;
+	}
+
+	UBallSnapshot(const UBall& ball)
+		: Location{ ball.Location }
+		, Radius{ ball.Radius }
+		, VertexBuffer{ ball.VertexBuffer }
+		, NumVertices{ ball.NumVertices }
+	{
+	}
+
+	void Render(URenderer& renderer)
+	{
+		renderer.UpdateConstant(Location, FVector{ Radius, Radius, Radius });
+		renderer.RenderPrimitive(VertexBuffer, NumVertices);
+	}
+};
+
+struct FReplayFrame
+{
+	int NumBalls;
+	UBallSnapshot** BallSnapshotList;
+
+	FReplayFrame()
+		: NumBalls{ 0 }
+		, BallSnapshotList{ nullptr }
+	{
+	}
+
+	FReplayFrame(int numBalls)
+		: NumBalls{ numBalls }
+	{
+		BallSnapshotList = new UBallSnapshot * [numBalls];
+		for (int i = 0; i < numBalls; i++)
+		{
+			BallSnapshotList[i] = nullptr;
+		}
+	}
+
+	void Release()
+	{
+		for (int i = 0; i < NumBalls; i++)
+		{
+			delete BallSnapshotList[i];
+		}
+		delete[] BallSnapshotList;
+		BallSnapshotList = nullptr;
+		NumBalls = 0;
+	}
+};
+
+class UReplayBuffer
+{
+public:
+	const static int BufferCapacity = 150; // 30 FPS * 5 sec
+	FReplayFrame ReplayFrame[BufferCapacity];
+	int ReplayWriteIndex = 0;
+	int ReplayCount = 0;
+
+	UReplayBuffer()
+	{
+		for (int i = 0; i < BufferCapacity; i++)
+		{
+			ReplayFrame[i] = FReplayFrame();
+		}
+	}
+
+	~UReplayBuffer()
+	{
+		for (int i = 0; i < ReplayCount; i++)
+		{
+			ReplayFrame[i].Release();
+		}
+	}
+
+	void RecordFrame(
+		UPrimitive** const& primitiveList,
+		int count)
+	{
+		ReplayCount = min(ReplayCount + 1, BufferCapacity);
+
+		if (ReplayFrame[ReplayWriteIndex].BallSnapshotList)
+		{
+			ReplayFrame[ReplayWriteIndex].Release();
+		}
+
+		ReplayFrame[ReplayWriteIndex].NumBalls = count;
+		ReplayFrame[ReplayWriteIndex].BallSnapshotList =
+			new UBallSnapshot * [count];
+
+		for (int i = 0; i < count; i++)
+		{
+			ReplayFrame[ReplayWriteIndex].BallSnapshotList[i] = nullptr;
+
+			UBall* ball = dynamic_cast<UBall*>(primitiveList[i]);
+			if (ball == nullptr)
+			{
+				continue;
+			}
+
+			ReplayFrame[ReplayWriteIndex].BallSnapshotList[i] =
+				new UBallSnapshot(*ball);
+		}
+		ReplayWriteIndex = (ReplayWriteIndex + 1) % BufferCapacity;
+	}
+
+	void RenderReplayFrame(
+		int frameNum,
+		URenderer& renderer)
+	{
+		if (frameNum < 0 || frameNum >= ReplayCount)
+		{
+			return;
+		}
+
+		int OldestIndex = (ReplayCount == BufferCapacity) ? ReplayWriteIndex : 0;
+		int ActualIndex = (OldestIndex + frameNum) % BufferCapacity;
+
+		FReplayFrame& Frame = ReplayFrame[ActualIndex];
+
+		for (int i = 0; i < Frame.NumBalls; i++)
+		{
+			Frame.BallSnapshotList[i]->Render(renderer);
 		}
 	}
 };
@@ -393,7 +933,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
 
-	return 0;	
+	return 0;
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
@@ -427,42 +967,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ImGui_ImplDX11_Init(renderer.Device, renderer.DeviceContext);
 
 	// Create vertex buffer after renderer and shader
-	//FVertexSimple* vertices = sphere_vertices;
-	//UINT ByteWidth = sizeof(sphere_vertices);
-	//UINT numVertices = sizeof(sphere_vertices) / sizeof(FVertexSimple);
 
-	//float scaleMod = 0.1f;
-
-	//for (UINT i = 0; i < numVertices; ++i)
-	//{
-	//	sphere_vertices[i].x *= scaleMod;
-	//	sphere_vertices[i].y *= scaleMod;
-	//	sphere_vertices[i].z *= scaleMod;
-	//}
-
-	//// Create vertex buffer
-	//D3D11_BUFFER_DESC vertexbufferdesc = {};
-	//vertexbufferdesc.ByteWidth = ByteWidth;
-	//vertexbufferdesc.Usage = D3D11_USAGE_IMMUTABLE;
-	//vertexbufferdesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-
-	//D3D11_SUBRESOURCE_DATA vertexbufferSRD = { vertices };
-
-	//ID3D11Buffer* vertexBuffer;
-
-	//renderer.Device->CreateBuffer(&vertexbufferdesc, &vertexbufferSRD, &vertexBuffer);
 	UINT numVerticesTriangle = sizeof(triangle_vertices) / sizeof(FVertexSimple);
 	UINT numVerticesCube = sizeof(cube_vertices) / sizeof(FVertexSimple);
 	UINT numVerticesSphere = sizeof(sphere_vertices) / sizeof(FVertexSimple);
 
-	float scaleMod = 0.1f;
-
-	for (UINT i = 0; i < numVerticesSphere; ++i)
-	{
-		sphere_vertices[i].x *= scaleMod;
-		sphere_vertices[i].y *= scaleMod;
-		sphere_vertices[i].z *= scaleMod;
-	}
 
 	ID3D11Buffer* vertexBufferTriangle = renderer.CreateVertexBuffer(triangle_vertices, sizeof(triangle_vertices));
 	ID3D11Buffer* vertexBufferCube = renderer.CreateVertexBuffer(cube_vertices, sizeof(cube_vertices));
@@ -478,38 +987,53 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		EPT_Max,
 	};
 
-	//ETypePrimitive typePrimitive = EPT_Triangle;
-	ETypePrimitive typePrimitive = EPT_Sphere;
-	FVector offset(0.0f);
-	FVector velocity(0.0f);
-
-	// Border
-	const float leftBorder = -1.0f;
-	const float rightBorder = 1.0f;
-	const float topBorder = -1.0f;
-	const float bottomBorder = 1.0f;
-	const float sphereRadius = 1.0f;
-
-	bool bBoundBallToScreen = true;
-	bool bPindBallMovement = true;
-
-	velocity.x = ((float)(rand() % 100 - 50)) * 0.001f;
-	velocity.y = ((float)(rand() % 100 - 50)) * 0.001f;
-
+	// Frame timer
 	const int targetFPS = 30;
 	const double targetFrameTime = 1000.0 / targetFPS;
 
 	LARGE_INTEGER frequency;
 	QueryPerformanceFrequency(&frequency);
 
-	LARGE_INTEGER startTime, endTime;
+	LARGE_INTEGER startTime, endTime, PrevTime;
 	double elapsedTime = 0.0f;
+	float DeltaTime = 0.0f;
+	QueryPerformanceCounter(&PrevTime);
+
+	// Ball Management
+	UPrimitive** PrimitiveList = nullptr;
+	int PrimitiveCount;
+	int PrimitiveCapacity;
+
+
+	InitPrimitiveList(4, PrimitiveList, PrimitiveCount, PrimitiveCapacity);
+	AddNewBall(
+		vertexBufferSphere,
+		numVerticesSphere,
+		PrimitiveList,
+		PrimitiveCount,
+		PrimitiveCapacity);
+
+	// Gravity
+	bool bUseGravity = true;
+
+	//// Extra features
+	// Time scaling
+	float TimeScale = 1.0f;
+	bool bPause = false;
+
+	// Replay
+	UReplayBuffer Replaybuffer;
+	int ReplayFrameNum = 0;
 
 	// Main Loop
 	while (bIsExit == false)
 	{
 		// Timer
 		QueryPerformanceCounter(&startTime);
+
+		DeltaTime = static_cast<float>(startTime.QuadPart - PrevTime.QuadPart) /
+			static_cast<double>(frequency.QuadPart);
+		PrevTime = startTime;
 
 		// Message handling
 		MSG msg;
@@ -525,71 +1049,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				bIsExit = true;
 				break;
 			}
-			else if (msg.message == WM_KEYDOWN)
-			{
-				if (msg.wParam == VK_LEFT)
-				{
-					offset.x -= 0.01f;
-				}
-				if (msg.wParam == VK_RIGHT)
-				{
-					offset.x += 0.01f;
-				}
-				if (msg.wParam == VK_UP)
-				{
-					offset.y += 0.01f;
-				}
-				if (msg.wParam == VK_DOWN)
-				{
-					offset.y -= 0.01f;
-				}
-
-				// Screen border handling
-				float renderRadius = sphereRadius * scaleMod;
-				if (offset.x < leftBorder + renderRadius)
-				{
-					offset.x = leftBorder + renderRadius;
-				}
-				if (offset.x > rightBorder - renderRadius)
-				{
-					offset.x = rightBorder - renderRadius;
-				}
-				if (offset.y < topBorder + renderRadius)
-				{
-					offset.y = topBorder + renderRadius;
-				}
-				if (offset.y > bottomBorder - renderRadius)
-				{
-					offset.y = bottomBorder - renderRadius;
-				}
-			}
 		}
 
-		// Pinball movement handling
-		if (bPindBallMovement)
+		if (bUseGravity)
 		{
-			offset.x += velocity.x;
-			offset.y += velocity.y;
-			offset.z += velocity.z;
-
-			float renderRadius = sphereRadius * scaleMod;
-			if (offset.x < leftBorder + renderRadius)
-			{
-				velocity.x *= -1.0f;
-			}
-			if (offset.x > rightBorder - renderRadius)
-			{
-				velocity.x *= -1.0f;
-			}
-			if (offset.y < topBorder + renderRadius)
-			{
-				velocity.y *= -1.0f;
-			}
-			if (offset.y > bottomBorder - renderRadius)
-			{
-				velocity.y *= -1.0f;
-			}
+			AddAllBallGravity(
+				DeltaTime * TimeScale,
+				PrimitiveList,
+				PrimitiveCount);
 		}
+		UpdateAllBalls(
+			DeltaTime * TimeScale,
+			PrimitiveList,
+			PrimitiveCount);
+		ResolveAllBallCollisions(
+			PrimitiveList,
+			PrimitiveCount);
 
 		// Do something
 
@@ -597,21 +1072,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		renderer.Prepare();
 		renderer.PrepareShader();
 
-		// Request rendering
-		//renderer.RenderPrimitive(vertexBuffer, numVertices);
-		renderer.UpdateConstant(offset);
-
-		switch (typePrimitive)
+		if (bPause) // replay mode
 		{
-		case EPT_Triangle:
-			renderer.RenderPrimitive(vertexBufferTriangle, numVerticesTriangle);
-			break;
-		case EPT_Cube:
-			renderer.RenderPrimitive(vertexBufferCube, numVerticesCube);
-			break;
-		case EPT_Sphere:
-			renderer.RenderPrimitive(vertexBufferSphere, numVerticesSphere);
-			break;
+			Replaybuffer.RenderReplayFrame(ReplayFrameNum, renderer);
+		}
+		else
+		{
+			RenderAllBalls(renderer, PrimitiveList, PrimitiveCount);
+			// Record replay buffer
+			Replaybuffer.RecordFrame(PrimitiveList, PrimitiveCount);
 		}
 
 		// ImGui
@@ -620,27 +1089,42 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::NewFrame();
 
 		ImGui::Begin("Jungle Property Window");
-		
+
 		ImGui::Text("Hello Jungle World!");
 
-		ImGui::Checkbox("Bound Ball To Screen", &bBoundBallToScreen);
-		ImGui::Checkbox("Pinball Movement", &bPindBallMovement);
-		//if (ImGui::Button("Change primitive"))
-		//{
-		//	switch (typePrimitive)
-		//	{
-		//	case EPT_Triangle:
-		//		typePrimitive = EPT_Cube;
-		//		break;
-		//	case EPT_Cube:
-		//		typePrimitive = EPT_Sphere;
-		//		break;
-		//	case EPT_Sphere:
-		//		typePrimitive = EPT_Triangle;
-		//		break;
-		//	}
-		//}
-		
+		if (ImGui::Checkbox("Gravity", &bUseGravity));
+
+		int numBalls = UBall::TotalNumBalls;
+		ImGui::InputInt("Number of Balls", &numBalls);
+
+		ModifyNumOfBalls(
+			numBalls,
+			vertexBufferSphere,
+			numVerticesSphere,
+			PrimitiveList,
+			PrimitiveCount,
+			PrimitiveCapacity);
+
+		if (ImGui::Checkbox("Pause", &bPause))
+		{
+			TimeScale = 1.0f - bPause;
+
+			if (bPause)
+			{
+				ReplayFrameNum = max(0, Replaybuffer.ReplayCount - 1);
+			}
+		}
+
+		if (bPause)
+		{
+			int MaxFrame = max(0, Replaybuffer.ReplayCount - 1);
+			if (ReplayFrameNum > MaxFrame)
+			{
+				ReplayFrameNum = MaxFrame;
+			}
+			ImGui::SliderInt("Replay Frame", &ReplayFrameNum, 0, MaxFrame);
+		}
+
 		ImGui::End();
 
 		ImGui::Render();
@@ -663,6 +1147,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 
+	ReleasePrimitiveList(PrimitiveList, PrimitiveCount, PrimitiveCapacity);
 	renderer.ReleaseVertexBuffer(vertexBufferTriangle);
 	renderer.ReleaseVertexBuffer(vertexBufferCube);
 	renderer.ReleaseVertexBuffer(vertexBufferSphere);
