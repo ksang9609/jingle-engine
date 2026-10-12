@@ -1,0 +1,6 @@
+@startuml name Test Diagram
+class a
+class b
+
+a -> b
+@enduml
