@@ -30,8 +30,8 @@ private:
 	FEngineTimer mEngineTimer;
 
 	/* Internal States */
-	bool mIsInitialized;
-	bool mIsReleased;
+	bool mbIsInitialized;
+	bool mbIsReleased;
 
 	/* Member Functions */
 	void createManagers(HWND hWindow);

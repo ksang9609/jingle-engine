@@ -23,8 +23,8 @@ FEditorEngine::FEditorEngine()
 	, mUiManager(nullptr)
 	, mVertexBuffer(nullptr)
 	, mEngineTimer(0) // no target FPS, unlimited
-	, mIsInitialized(false)
-	, mIsReleased(false)
+	, mbIsInitialized(false)
+	, mbIsReleased(false)
 {
 
 }
@@ -36,7 +36,7 @@ FEditorEngine::~FEditorEngine()
 
 void FEditorEngine::Init(HWND hWindow)
 {
-	if (mIsInitialized)
+	if (mbIsInitialized)
 	{
 		return;
 	}
@@ -46,12 +46,12 @@ void FEditorEngine::Init(HWND hWindow)
 	// Create vertex buffer after renderer and shader
 	mVertexBuffer = mRenderer->CreateVertexBuffer(SPHERE_VERTICES, sizeof(SPHERE_VERTICES));
 
-	mIsInitialized = true;
+	mbIsInitialized = true;
 }
 
 bool FEditorEngine::Update()
 {
-	assert(mIsInitialized);
+	assert(mbIsInitialized);
 
 	// Timer
 	mEngineTimer.StartFrame();
@@ -90,8 +90,8 @@ bool FEditorEngine::Update()
 
 void FEditorEngine::End()
 {
-	assert(mIsInitialized);
-	if (mIsReleased)
+	assert(mbIsInitialized);
+	if (mbIsReleased)
 	{
 		return;
 	}
@@ -105,7 +105,7 @@ void FEditorEngine::End()
 
 	releaseManagers();
 
-	mIsReleased = true;
+	mbIsReleased = true;
 }
 
 void FEditorEngine::createManagers(HWND hWindow)
