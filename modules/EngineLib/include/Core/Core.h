@@ -3,6 +3,7 @@
 #pragma once
 
 #include <string>
+#include <expected>
 
 using int8 = char;
 using uint8 = unsigned char;
@@ -17,3 +18,9 @@ using float32 = float;
 using float64 = double;
 
 using FString = std::string;
+
+template<typename T, typename E>
+using TResult = std::expected<T, E>;
+
+template<typename E>
+using TErr = std::unexpected<E>;

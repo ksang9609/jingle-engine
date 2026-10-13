@@ -12,7 +12,7 @@ workspace "JungleEngine"
     architecture "x86_64"
 
     language "C++"
-    cppdialect "C++20"
+    cppdialect "C++23"
     characterset "Unicode"
     staticruntime "Off"
     warnings "Extra"

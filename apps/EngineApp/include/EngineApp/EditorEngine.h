@@ -4,7 +4,9 @@
 #include <d3d11.h>
 
 class URenderer;
-class FEditorEngine
+class FEditorUiManager;
+
+class FEditorEngine final
 {
 public:
 	FEditorEngine();
@@ -14,9 +16,12 @@ public:
 	bool Update();
 	void End();
 private:
-	/* Resources */
+	/* Managers */
+	// TODO: Wrap renderer by GraphicsManager
 	URenderer* mRenderer;
+	FEditorUiManager* mUiManager;
 
+	// TODO: Move this to a separate class, e.g., GpuResourceManager
 	ID3D11Buffer* mVertexBuffer;
 
 	/* Timer */
@@ -28,4 +33,8 @@ private:
 	/* Internal States */
 	bool mIsInitialized;
 	bool mIsReleased;
+
+	/* Member Functions */
+	void createManagers(HWND hWindow);
+	void releaseManagers();
 };

@@ -16,9 +16,11 @@
 #include "EngineApp/EditorEngine.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/Primitives/Sphere.h"
+#include "Editor/EditorUiManager.h"
 
 FEditorEngine::FEditorEngine()
 	: mRenderer(nullptr)
+	, mUiManager(nullptr)
 	, mVertexBuffer(nullptr)
 	, mPrevTime{}
 	, mFrequency{}
@@ -42,15 +44,7 @@ void FEditorEngine::Init(HWND hWindow)
 		return;
 	}
 
-	// Create Renderer
-	mRenderer = new URenderer(hWindow);
-
-	// Create ImGui
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO();
-	ImGui_ImplWin32_Init((void*)hWindow);
-	ImGui_ImplDX11_Init(mRenderer->GetDevice(), mRenderer->GetDeviceContext());
+	createManagers(hWindow);
 
 	// Create vertex buffer after renderer and shader
 	mVertexBuffer = mRenderer->CreateVertexBuffer(SPHERE_VERTICES, sizeof(SPHERE_VERTICES));
@@ -66,10 +60,7 @@ void FEditorEngine::Init(HWND hWindow)
 
 bool FEditorEngine::Update()
 {
-	if (!mIsInitialized)
-	{
-		return false;
-	}
+	assert(mIsInitialized);
 
 	// Timer
 	// TODO: Move this to a separate class
@@ -102,18 +93,7 @@ bool FEditorEngine::Update()
 		mRenderer->UpdateConstant(FVector(0.0f, 0.0f, 0.0f), FVector(1.0f, 1.0f, 1.0f));
 		mRenderer->RenderPrimitive(*mVertexBuffer, sizeof(SPHERE_VERTICES) / sizeof(FVertexSimple));
 
-		/* ImGui */
-		{
-			ImGui_ImplDX11_NewFrame();
-			ImGui_ImplWin32_NewFrame();
-			ImGui::NewFrame();
-
-			ImGui::Begin("Jungle Property Window");
-			ImGui::Text("Current deltaTime: %.3f ms", deltaTime * 1000.0f);
-			ImGui::End();
-			ImGui::Render();
-			ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-		}
+		mUiManager->Render();
 
 		mRenderer->SwapBuffer();
 	}
@@ -134,14 +114,11 @@ bool FEditorEngine::Update()
 
 void FEditorEngine::End()
 {
-	if (!mIsInitialized || mIsReleased)
+	assert(mIsInitialized);
+	if (mIsReleased)
 	{
 		return;
 	}
-
-	ImGui_ImplDX11_Shutdown();
-	ImGui_ImplWin32_Shutdown();
-	ImGui::DestroyContext();
 
 	// Release resources
 	if (mVertexBuffer)
@@ -150,12 +127,42 @@ void FEditorEngine::End()
 		mVertexBuffer = nullptr;
 	}
 
+	releaseManagers();
+
+	mIsReleased = true;
+}
+
+void FEditorEngine::createManagers(HWND hWindow)
+{
+	// Create Renderer
+	if (mRenderer == nullptr)
+	{
+		mRenderer = new URenderer(hWindow);
+	}
+
+	// Create UI Manager
+	if (mUiManager == nullptr)
+	{
+		mUiManager = new FEditorUiManager(
+			hWindow,
+			mRenderer->GetDevice(),
+			mRenderer->GetDeviceContext()
+		);
+	}
+}
+
+void FEditorEngine::releaseManagers()
+{
+	if (mUiManager)
+	{
+		mUiManager->Release();
+		delete mUiManager;
+		mUiManager = nullptr;
+	}
 	if (mRenderer)
 	{
 		mRenderer->Release();
 		delete mRenderer;
 		mRenderer = nullptr;
 	}
-
-	mIsReleased = true;
 }
