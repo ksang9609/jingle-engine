@@ -1,4 +1,4 @@
-// Editor/EditorUiManager.h
+// Editor/UI/EditorUiManager.h
 #pragma once
 
 #include <Windows.h>

@@ -1,6 +1,6 @@
-// Editor/EditorUiManager.cpp
+// Editor/UI/EditorUiManager.cpp
 
-#include "Editor/EditorUiManager.h"
+#include "Editor/UI/EditorUiManager.h"
 
 #include <cassert>
 

@@ -16,7 +16,7 @@
 #include "EngineApp/EditorEngine.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/Primitives/Sphere.h"
-#include "Editor/EditorUiManager.h"
+#include "Editor/UI/EditorUiManager.h"
 
 FEditorEngine::FEditorEngine()
 	: mRenderer(nullptr)
