@@ -3,6 +3,8 @@
 
 #include <d3d11.h>
 
+#include "EngineTimer.h"
+
 class URenderer;
 class FEditorUiManager;
 
@@ -25,10 +27,7 @@ private:
 	ID3D11Buffer* mVertexBuffer;
 
 	/* Timer */
-	LARGE_INTEGER mPrevTime;
-	LARGE_INTEGER mFrequency;
-	int mTargetFPS;
-	double mTargetFrameTime;
+	FEngineTimer mEngineTimer;
 
 	/* Internal States */
 	bool mIsInitialized;

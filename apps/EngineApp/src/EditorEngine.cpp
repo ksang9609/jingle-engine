@@ -22,10 +22,7 @@ FEditorEngine::FEditorEngine()
 	: mRenderer(nullptr)
 	, mUiManager(nullptr)
 	, mVertexBuffer(nullptr)
-	, mPrevTime{}
-	, mFrequency{}
-	, mTargetFPS(30)
-	, mTargetFrameTime(1000.0 / mTargetFPS)
+	, mEngineTimer(0) // no target FPS, unlimited
 	, mIsInitialized(false)
 	, mIsReleased(false)
 {
@@ -49,12 +46,6 @@ void FEditorEngine::Init(HWND hWindow)
 	// Create vertex buffer after renderer and shader
 	mVertexBuffer = mRenderer->CreateVertexBuffer(SPHERE_VERTICES, sizeof(SPHERE_VERTICES));
 
-	// Timer
-	{
-		QueryPerformanceFrequency(&mFrequency);
-		QueryPerformanceCounter(&mPrevTime);
-	}
-
 	mIsInitialized = true;
 }
 
@@ -63,14 +54,7 @@ bool FEditorEngine::Update()
 	assert(mIsInitialized);
 
 	// Timer
-	// TODO: Move this to a separate class
-	LARGE_INTEGER startTime;
-	QueryPerformanceCounter(&startTime);
-
-	const float deltaTime = static_cast<float>(
-		startTime.QuadPart - mPrevTime.QuadPart) /
-		mFrequency.QuadPart;
-	mPrevTime = startTime;
+	mEngineTimer.StartFrame();
 
 
 	/* Message handling */
@@ -99,15 +83,7 @@ bool FEditorEngine::Update()
 	}
 
 	// Wait for the next frame
-	LARGE_INTEGER endTime;
-	QueryPerformanceCounter(&endTime);
-	float elapsedTimeMS = static_cast<float>(endTime.QuadPart - mPrevTime.QuadPart) / mFrequency.QuadPart * 1000.0f;
-	while (elapsedTimeMS < mTargetFrameTime)
-	{
-		Sleep(0);
-		QueryPerformanceCounter(&endTime);
-		elapsedTimeMS = static_cast<float>(endTime.QuadPart - mPrevTime.QuadPart) / mFrequency.QuadPart * 1000.0f;
-	}
+	mEngineTimer.WaitForNextFrame();
 
 	return true;
 }
