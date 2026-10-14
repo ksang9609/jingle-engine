@@ -10,12 +10,19 @@
 #include <ImGui/imgui_impl_win32.h>
 
 FEditorUiManager::FEditorUiManager(HWND hWnd, ID3D11Device* device, ID3D11DeviceContext* context)
+	: mbIsInitialized(false)
+	, mbIsReleased(false)
 {
 	// Initialize ImGui
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGui_ImplWin32_Init(hWnd);
-	ImGui_ImplDX11_Init(device, context);
+
+	bool bSuccess = true;
+	bSuccess &= ImGui_ImplWin32_Init(hWnd);
+	bSuccess &= ImGui_ImplDX11_Init(device, context);
+
+	assert(bSuccess);
+	mbIsInitialized = bSuccess;
 }
 
 FEditorUiManager::~FEditorUiManager()
