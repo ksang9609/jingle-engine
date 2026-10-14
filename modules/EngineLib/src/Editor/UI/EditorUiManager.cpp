@@ -10,7 +10,8 @@
 #include <ImGui/imgui_impl_win32.h>
 
 FEditorUiManager::FEditorUiManager(HWND hWnd, ID3D11Device* device, ID3D11DeviceContext* context)
-	: mbIsInitialized(false)
+	: mConsoleWindow()
+	, mbIsInitialized(false)
 	, mbIsReleased(false)
 {
 	// Initialize ImGui
@@ -30,7 +31,7 @@ FEditorUiManager::~FEditorUiManager()
 	Release();
 }
 
-void FEditorUiManager::Render() const
+void FEditorUiManager::Render()
 {
 	assert(mbIsInitialized);
 
@@ -41,6 +42,8 @@ void FEditorUiManager::Render() const
 	ImGui::Begin("Jungle Property Window");
 	ImGui::Text("Hello, world!");
 	ImGui::End();
+
+	mConsoleWindow.DrawWindow();
 
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
@@ -57,4 +60,6 @@ void FEditorUiManager::Release()
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
+	
+	mbIsReleased = true;
 }
