@@ -18,6 +18,7 @@ using float32 = float;
 using float64 = double;
 
 using FString = std::string;
+using FStringView = std::string_view;
 
 template<typename T, typename E>
 using TResult = std::expected<T, E>;
