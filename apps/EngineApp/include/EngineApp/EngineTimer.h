@@ -12,9 +12,11 @@ public:
 	~FEngineTimer() = default;
 
 	void StartFrame();
-	void WaitForNextFrame() const;
+	void WaitForNextFrame();
 
 	void SetTargetFPS(uint32 targetFPS);
+
+	float64 GetDeltaTimeMS() const { return mDeltaTimeMS; }
 
 private:
 	LARGE_INTEGER mStartTimeTick;
@@ -22,4 +24,6 @@ private:
 
 	uint32 mTargetFPS; // 0 for unlimited FPS
 	float64 mTargetFrameTimeMS;
+
+	float64 mDeltaTimeMS;
 };

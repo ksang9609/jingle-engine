@@ -8,6 +8,7 @@ FEngineTimer::FEngineTimer(int targetFPS)
 	, mFrequency{}
 	, mTargetFPS(targetFPS)
 	, mTargetFrameTimeMS(0.0)
+	, mDeltaTimeMS(0.0)
 {
 	QueryPerformanceFrequency(&mFrequency);
 	mTargetFrameTimeMS = (mTargetFPS > 0) ? 1.0 / (mTargetFPS * 1000.0f) : 0.0;
@@ -18,7 +19,7 @@ void FEngineTimer::StartFrame()
 	QueryPerformanceCounter(&mStartTimeTick);
 }
 
-void FEngineTimer::WaitForNextFrame() const
+void FEngineTimer::WaitForNextFrame()
 {
 	// Don't wait if target FPS is 0 (unlimited)
 	if (mTargetFPS == 0)
@@ -28,18 +29,18 @@ void FEngineTimer::WaitForNextFrame() const
 
 	LARGE_INTEGER currentTimeTick;
 	QueryPerformanceCounter(&currentTimeTick);
-	float64 deltaTimeMS = static_cast<float64>(
-		currentTimeTick.QuadPart - mStartTimeTick.QuadPart
-		/ (mFrequency.QuadPart * 1000.0f));
+	mDeltaTimeMS = static_cast<float64>
+		(currentTimeTick.QuadPart - mStartTimeTick.QuadPart)
+		/ mFrequency.QuadPart * 1000.0f;
 
-	while (deltaTimeMS < mTargetFrameTimeMS)
+	while (mDeltaTimeMS < mTargetFrameTimeMS)
 	{
 		Sleep(0);
 		QueryPerformanceCounter(&currentTimeTick);
 
-		deltaTimeMS = static_cast<float64>(
-			currentTimeTick.QuadPart - mStartTimeTick.QuadPart
-			/ (mFrequency.QuadPart * 1000.0f));
+		mDeltaTimeMS = static_cast<float64>
+			(currentTimeTick.QuadPart - mStartTimeTick.QuadPart)
+			/ mFrequency.QuadPart * 1000.0f;
 	}
 }
 

@@ -13,6 +13,7 @@
 #include <ImGui/imgui_impl_dx11.h>
 #include <ImGui/imgui_impl_win32.h>
 
+#include "Core/ConsoleLogger.h"
 #include "EngineApp/EditorEngine.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/Primitives/Sphere.h"
@@ -22,7 +23,7 @@ FEditorEngine::FEditorEngine()
 	: mRenderer(nullptr)
 	, mUiManager(nullptr)
 	, mVertexBuffer(nullptr)
-	, mEngineTimer(0) // no target FPS, unlimited
+	, mEngineTimer(120) // target FPS
 	, mbIsInitialized(false)
 	, mbIsReleased(false)
 {
@@ -55,7 +56,8 @@ bool FEditorEngine::Update()
 
 	// Timer
 	mEngineTimer.StartFrame();
-
+	float64 deltaTimeMS = mEngineTimer.GetDeltaTimeMS();
+	consoleLog::Log(ELogLevel::Info, "Delta Time: {:.3f} ms", deltaTimeMS);
 
 	/* Message handling */
 	MSG msg;
