@@ -50,7 +50,7 @@ float FVector::dot(const FVector& vA, const FVector& vB)
 	return vA.X * vB.X + vA.Y * vB.Y + vA.Z * vB.Z;
 }
 
-static FVector operator*(const float& f, const FVector& v)
+FVector operator*(const float& f, const FVector& v)
 {
 	return { v.X * f, v.Y * f, v.Z * f };
 }
