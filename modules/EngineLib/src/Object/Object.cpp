@@ -6,7 +6,7 @@
 UObject::UObject()
 {
 	mObjectID = {
-		.UUID = UEngineStatics::GenUUID(),
+		.UUID = engineStatics::GenUUID(),
 		.InternalIndex =
 			GUObjectArray.Add(this)
 	};
@@ -18,26 +18,26 @@ UObject::~UObject()
 }
 
 // Copy constructor
-UObject::UObject(const UObject& other)
+UObject::UObject(const UObject&)
 	: UObject()
 {
 }
 
 // Copy assignment operator
-UObject& UObject::operator= (const UObject& other)
+UObject& UObject::operator= (const UObject&)
 {
 	// Copy construcotr is called,
 	return *this;
 }
 
 // Move constructor
-UObject::UObject(UObject&& other) noexcept
+UObject::UObject(UObject&&) noexcept
 	: UObject()
 {
 }
 
 // Move assignment operator
-UObject& UObject::operator= (UObject&& other) noexcept
+UObject& UObject::operator= (UObject&&) noexcept
 {
 	return *this;
 }

@@ -15,10 +15,10 @@ class UObject
 public:
 	UObject();
 	virtual ~UObject();
-	UObject(const UObject& other);
-	UObject& operator= (const UObject& other);
-	UObject(UObject&& other) noexcept;
-	UObject& operator= (UObject&& other) noexcept;
+	UObject(const UObject&);
+	UObject& operator= (const UObject&);
+	UObject(UObject&&) noexcept;
+	UObject& operator= (UObject&&) noexcept;
 
 	/* Getter / Setters */
 	inline uint32 GetUUID() const { return mObjectID.UUID; }
