@@ -14,6 +14,7 @@
 #include <ImGui/imgui_impl_win32.h>
 
 #include "Core/ConsoleLogger.h"
+#include "Core/EngineStatics.h"
 #include "EngineApp/EditorEngine.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/Primitives/Sphere.h"

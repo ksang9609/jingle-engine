@@ -1,26 +1,20 @@
 // Core/EngineStatics.h
 #pragma once
+#pragma warning(disable: 28251)
 
 #include "Core/Core.h"
 
-class UEngineStatics
+namespace engineStatics
 {
-public:
-	inline static uint32 GenUUID()
-	{
-		return msNextUUID++;
-	}
+	/* UUID */
+	uint32 GenUUID();
+	uint32 GetNextUUID();
+	void SetNextUUID(uint32 uuid);
 
-	inline static uint32 GetNextUUID()
-	{
-		return msNextUUID;
-	}
+	/* Memory */
+	uint32 GetTotalAllocationBytes();
+	uint32 GetTotalAllocationCount();
+}
 
-	inline static void SetUUID(uint32 uuid)
-	{
-		msNextUUID = uuid;
-	}
-
-private:
-	inline static uint32 msNextUUID;
-};
+void* operator new(size_t size);
+void operator delete(void* deleteObject, size_t size);
