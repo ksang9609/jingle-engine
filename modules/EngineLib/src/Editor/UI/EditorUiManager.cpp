@@ -18,6 +18,10 @@ FEditorUiManager::FEditorUiManager(HWND hWnd, ID3D11Device* device, ID3D11Device
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 
+	ImGuiIO& io = ImGui::GetIO();
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // Enable Docking
+
 	bool bSuccess = true;
 	bSuccess &= ImGui_ImplWin32_Init(hWnd);
 	bSuccess &= ImGui_ImplDX11_Init(device, context);
@@ -38,6 +42,14 @@ void FEditorUiManager::Render()
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
+
+	ImGui::DockSpaceOverViewport(
+		0, ImGui::GetMainViewport()
+	);
+
+	//ImGui::Begin();
+	//ImGui::Image()
+	//ImGui::End();
 
 	ImGui::Begin("Jungle Property Window");
 	ImGui::Text("Hello, world!");
