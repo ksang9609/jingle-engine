@@ -47,12 +47,15 @@ void FConsoleWindow::DrawWindow()
 		switch (log.Level)
 		{
 		case ELogLevel::Info:
+			// White
 			ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), "%s", "[Info] ");
 			break;
 		case ELogLevel::Warning:
+			// Yellow
 			ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%s", "[Warning] ");
 			break;
 		case ELogLevel::Error:
+			// Red
 			ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", "[Error] ");
 			break;
 		default:
