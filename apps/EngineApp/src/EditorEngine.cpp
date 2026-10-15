@@ -81,7 +81,7 @@ bool FEditorEngine::Update()
 		mRenderer->UpdateConstant(FVector(0.0f, 0.0f, 0.0f), FVector(1.0f, 1.0f, 1.0f));
 		mRenderer->RenderPrimitive(*mVertexBuffer, sizeof(SPHERE_VERTICES) / sizeof(FVertexSimple));
 
-		mUiManager->Render();
+		mUiManager->Render(mRenderer->GetViewportBufferSRV());
 
 		mRenderer->SwapBuffer();
 	}

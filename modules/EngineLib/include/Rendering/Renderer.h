@@ -41,6 +41,7 @@ public:
 	/* Getter */
 	ID3D11Device* GetDevice() const { return mDevice; }
 	ID3D11DeviceContext* GetDeviceContext() const { return mDeviceContext; }
+	ID3D11ShaderResourceView* GetViewportBufferSRV() const { return mViewportBufferSRV; }
 
 private:
 	// Pointers to manage Direct3D 11 device, device context, and swap chain
@@ -53,6 +54,9 @@ private:
 	ID3D11RenderTargetView* mFrameBufferRTV = nullptr;
 	ID3D11RasterizerState* mRasterizerState = nullptr;
 	ID3D11Buffer* mConstantBuffer = nullptr;
+	ID3D11Texture2D* mViewportBuffer = nullptr;
+	ID3D11RenderTargetView* mViewportBufferRTV = nullptr;
+	ID3D11ShaderResourceView* mViewportBufferSRV = nullptr;
 
 	FLOAT mClearColor[4] = { 0.025f, 0.025f, 0.025f, 1.0f };
 	D3D11_VIEWPORT mViewportInfo;
@@ -71,6 +75,8 @@ private:
 	void releaseDeviceAndSwapChain();
 	void createFrameBuffer();
 	void releaseFrameBuffer();
+	void createViewportBuffer();
+	void releaseViewportBuffer();
 	void createRaterizerState();
 	void releaseRasterizerState();
 	void createShader();

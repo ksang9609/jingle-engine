@@ -35,7 +35,7 @@ FEditorUiManager::~FEditorUiManager()
 	Release();
 }
 
-void FEditorUiManager::Render()
+void FEditorUiManager::Render(ID3D11ShaderResourceView* frameTextureSRV)
 {
 	assert(mbIsInitialized);
 
@@ -47,18 +47,12 @@ void FEditorUiManager::Render()
 		0, ImGui::GetMainViewport()
 	);
 
-	//ImGui::Begin();
-	//ImGui::Image()
-	//ImGui::End();
-
 	ImGui::Begin("Jungle Property Window");
 	ImGui::Text("Hello, world!");
 	ImGui::End();
 
 	mConsoleWindow.DrawWindow();
 
-	ImGui::Render();
-	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 }
 
 void FEditorUiManager::Release()
