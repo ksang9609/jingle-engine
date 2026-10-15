@@ -19,6 +19,8 @@
 #include "Rendering/Primitives/Sphere.h"
 #include "Editor/UI/EditorUiManager.h"
 
+#include "Object/Object.h"
+
 FEditorEngine::FEditorEngine()
 	: mRenderer(nullptr)
 	, mUiManager(nullptr)
@@ -57,7 +59,6 @@ bool FEditorEngine::Update()
 	// Timer
 	mEngineTimer.StartFrame();
 	float64 deltaTimeMS = mEngineTimer.GetDeltaTimeMS();
-	consoleLog::Log(ELogLevel::Info, "Delta Time: {:.3f} ms", deltaTimeMS);
 
 	/* Message handling */
 	MSG msg;
