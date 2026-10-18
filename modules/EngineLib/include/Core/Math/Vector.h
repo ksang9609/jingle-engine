@@ -55,7 +55,7 @@ public:
 	FVector4 operator/(const float& f) const;
 
 	void Normalize();
-	[[nodiscard]] FVector4 Normalized() const;
+	[[nodiscard]] FVector4 GetNormalized() const;
 
 	float Dot(const FVector4& v) const;
 	static float Dot(const FVector4& vA, const FVector4& vB);

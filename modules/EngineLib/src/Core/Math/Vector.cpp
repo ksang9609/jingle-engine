@@ -155,7 +155,7 @@ void FVector4::Normalize()
 	W /= len;
 }
 
-FVector4 FVector4::Normalized() const
+FVector4 FVector4::GetNormalized() const
 {
 	float len = Length();
 	return FVector4{ X / len, Y / len, Z / len, W / len };
