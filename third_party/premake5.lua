@@ -5,7 +5,8 @@ project "ThirdParty"
 
     files {
         "**/**.h",
-        "**/**.cpp"
+        "**/**.cpp",
+        "**/**.inl"
     }
 
     includedirs { "third_party" }
