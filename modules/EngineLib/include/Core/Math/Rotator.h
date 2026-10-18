@@ -5,10 +5,12 @@
 #include "Core/Math/Quat.h"
 
 class FVector;
+class FQuat;
 
 class FRotator
 {
 public:
+	// Degree Angles
 	float Roll;		// X-axis
 	float Pitch;	// Y-axis
 	float Yaw;		// Z-axis
@@ -17,7 +19,7 @@ public:
 	FRotator(const FVector& euler);
 	FRotator();
 
-
+	FQuat ToQuat() const;
 private:
 
 };
