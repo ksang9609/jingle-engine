@@ -26,9 +26,14 @@ public:
 	float Dot(const FVector& v) const;
 	static float Dot(const FVector& vA, const FVector& vB);
 
+	static FVector Zero;
+	static FVector One;
+
 private:
 
 };
+
+using FVector3 = FVector;
 
 static FVector operator*(const float& f, const FVector& v);
 
@@ -59,4 +64,7 @@ public:
 
 	float Dot(const FVector4& v) const;
 	static float Dot(const FVector4& vA, const FVector4& vB);
+
+	static FVector4 Zero;
+	static FVector4 One;
 };

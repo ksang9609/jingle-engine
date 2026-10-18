@@ -4,6 +4,9 @@
 
 #include <cmath>
 
+FVector FVector::Zero = FVector(0, 0, 0);
+FVector FVector::One = FVector(1, 1, 1);
+
 FVector::FVector(float x, float y, float z)
 	: X(x)
 	, Y(y)
@@ -86,6 +89,9 @@ FVector operator*(const float& f, const FVector& v)
 
 
 /* ===== FVector4 ===== */
+
+FVector4 FVector4::Zero = FVector4(0, 0, 0, 1);
+FVector4 FVector4::One = FVector4(1, 1, 1, 1);
 
 FVector4::FVector4(float x, float y, float z, float w)
 	: X(x)

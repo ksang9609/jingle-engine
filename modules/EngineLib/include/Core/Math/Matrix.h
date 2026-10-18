@@ -5,21 +5,28 @@
 
 #include "Core/Core.h"
 
+class FVector;
+class FQuat;
+
 class FMatrix
 {
 private:
-	using Matrix4x4 = DirectX::SimpleMath::Matrix;
+	using NativeMatrix = DirectX::SimpleMath::Matrix;
 
 public:
 	FMatrix() = default;
 	FMatrix(const float matrix[4][4]);
-	FMatrix(Matrix4x4 matrix);
+	FMatrix(NativeMatrix matrix);
 
 	/* Methods */
 	[[nodiscard]] FMatrix GetTransposed() const;
 	void Transpose();
 	[[nodiscard]] TResult<FMatrix, FString> GetInverse() const;
 	[[nodiscard]] TResult<void, FString> Invert();
+
+	[[nodiscard]] static FMatrix Translation(const FVector& translation);
+	[[nodiscard]] static FMatrix Rotation(const FQuat& rotation);
+	[[nodiscard]] static FMatrix Scale(const FVector& scale);
 
 	/* Operators */
 	float* operator[](std::size_t row);
@@ -41,8 +48,8 @@ public:
 	static const FMatrix Identity;
 
 private:
-	TResult<Matrix4x4, FString> getInverseMatrix() const;
+	TResult<NativeMatrix, FString> getInverseMatrix() const;
 
 private:
-	Matrix4x4 mMatrix = Matrix4x4::Identity;
+	NativeMatrix mMatrix = NativeMatrix::Identity;
 };

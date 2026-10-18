@@ -3,7 +3,10 @@
 
 #include <cassert>
 
-const FMatrix FMatrix::Identity = FMatrix(Matrix4x4::Identity);
+#include "Core/Math/Vector.h"
+#include "Core/Math/Quat.h"
+
+const FMatrix FMatrix::Identity = FMatrix(NativeMatrix::Identity);
 
 FMatrix::FMatrix(const float matrix[4][4])
 {
@@ -16,7 +19,7 @@ FMatrix::FMatrix(const float matrix[4][4])
 	}
 }
 
-FMatrix::FMatrix(Matrix4x4 matrix)
+FMatrix::FMatrix(NativeMatrix matrix)
 	: mMatrix(matrix)
 {
 }
@@ -57,7 +60,7 @@ TResult<void, FString> FMatrix::Invert()
 	return {};
 }
 
-TResult<FMatrix::Matrix4x4, FString> FMatrix::getInverseMatrix() const
+TResult<FMatrix::NativeMatrix, FString> FMatrix::getInverseMatrix() const
 {
 	using namespace DirectX;
 
@@ -78,10 +81,44 @@ TResult<FMatrix::Matrix4x4, FString> FMatrix::getInverseMatrix() const
 		return TErr(FString("Matrix inversion resulted in NaN values."));
 	}
 
-	Matrix4x4 result;
+	NativeMatrix result;
 	XMStoreFloat4x4(&result, inverse);
 
 	return result;
+}
+
+// | 1  0  0  0 |
+// | 0  1  0  0 |
+// | 0  0  1  0 |
+// | tx ty tz 1 |
+FMatrix FMatrix::Translation(const FVector& translation)
+{
+	return FMatrix(NativeMatrix::CreateTranslation(
+		translation.X, translation.Y, translation.Z));
+}
+
+// | r00 r01 r02 0 |
+// | r10 r11 r12 0 |
+// | r20 r21 r22 0 |
+// | 0   0   0   1 |
+// rotation must be normalized
+FMatrix FMatrix::Rotation(const FQuat& rotation)
+{
+	const DirectX::SimpleMath::Quaternion q(
+		rotation.X, rotation.Y, rotation.Z, rotation.W
+	);
+
+	return FMatrix(NativeMatrix::CreateFromQuaternion(q));
+}
+
+// | sx 0  0  0 |
+// | 0  sy 0  0 |
+// | 0  0  sz 0 |
+// | 0  0  0  1 |
+FMatrix FMatrix::Scale(const FVector& scale)
+{
+	return FMatrix(NativeMatrix::CreateScale(
+		scale.X, scale.Y, scale.Z));
 }
 
 /* ===== Operators ===== */
