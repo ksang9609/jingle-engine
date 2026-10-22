@@ -18,6 +18,9 @@ public:
 	bool Update();
 	void End();
 private:
+	void createManagers(HWND hWindow);
+	void releaseManagers();
+private:
 	/* Managers */
 	// TODO: Wrap renderer by GraphicsManager
 	URenderer* mRenderer;
@@ -32,8 +35,4 @@ private:
 	/* Internal States */
 	bool mbIsInitialized;
 	bool mbIsReleased;
-
-	/* Member Functions */
-	void createManagers(HWND hWindow);
-	void releaseManagers();
 };
