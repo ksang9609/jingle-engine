@@ -15,7 +15,7 @@ private:
 
 public:
 	FMatrix() = default;
-	FMatrix(const float matrix[4][4]);
+	FMatrix(const float (&matrix)[4][4]);
 	FMatrix(NativeMatrix matrix);
 
 	/* Methods */

@@ -8,7 +8,7 @@
 
 const FMatrix FMatrix::Identity = FMatrix(NativeMatrix::Identity);
 
-FMatrix::FMatrix(const float matrix[4][4])
+FMatrix::FMatrix(const float (&matrix)[4][4])
 {
 	for (std::size_t i = 0; i < 4; ++i)
 	{
