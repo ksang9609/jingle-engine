@@ -3,7 +3,10 @@
 
 #include <SimpleMath/SimpleMath.h>
 
+#include "Core/Math/MathEnums.h"
+
 class FRotator;
+class FVector;
 class FQuat
 {
 private:
@@ -21,6 +24,11 @@ public:
 	FRotator ToRotator() const;
 	[[nodiscard]] FQuat GetNormalized() const;
 	void Normalize();
+
+	FVector GetAxisVector(EAxis axis) const;
+	FVector GetForwardVector() const;
+	FVector GetRightVector() const;
+	FVector GetUpVector() const;
 
 	static FQuat Slerp(const FQuat& start, const FQuat& end, float alpha);
 

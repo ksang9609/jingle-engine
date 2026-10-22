@@ -7,6 +7,7 @@
 #include <numbers>
 
 #include "Core/Math/Rotator.h"
+#include "Core/Math/Vector.h"
 
 const FQuat FQuat::Identity = FQuat(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -107,6 +108,47 @@ FQuat FQuat::GetNormalized() const
 void FQuat::Normalize()
 {
 	*this = GetNormalized();
+}
+
+FVector FQuat::GetAxisVector(EAxis axis) const
+{
+	using NativeVector = DirectX::SimpleMath::Vector3;
+
+	const NativeQuaternion rotation = toNative();
+
+	NativeVector result;
+	switch (axis)
+	{
+	case EAxis::X:
+		result = NativeVector::Transform(NativeVector::UnitX, rotation);
+		break;
+	case EAxis::Y:
+		result = NativeVector::Transform(NativeVector::UnitY, rotation);
+		break;
+	case EAxis::Z:
+		result = NativeVector::Transform(NativeVector::UnitZ, rotation);
+		break;
+	default:
+		assert(false && "Invalid axis");
+		return FVector::Zero;
+	}
+
+	return FVector{ result.x, result.y, result.z };
+}
+
+FVector FQuat::GetForwardVector() const
+{
+	return GetAxisVector(EAxis::X);
+}
+
+FVector FQuat::GetRightVector() const
+{
+	return GetAxisVector(EAxis::Y);
+}
+
+FVector FQuat::GetUpVector() const
+{
+	return GetAxisVector(EAxis::Z);
 }
 
 FQuat FQuat::operator*(const FQuat& other) const
