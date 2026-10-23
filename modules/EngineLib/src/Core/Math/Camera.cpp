@@ -15,21 +15,24 @@ FCamera::FCamera()
 }
 
 /* ===== Methods ===== */
+// Re-define the axis vectors from UE to DirectX coordinate system:
+// UE:		X (forward), Y (right), Z (up)
+// DirectX:	X (right), Y (up), Z (forward)
 FMatrix FCamera::GetViewMatrix() const
 {
 	const FVector up = mCameraRotation.GetUpVector();
 	const FVector right = mCameraRotation.GetRightVector();
 	const FVector forward = mCameraRotation.GetForwardVector();
 
-	// | f_x  r_x  u_x  0 |
-	// | f_y  r_y  u_y  0 |
-	// | f_z  r_z  u_z  0 |
-	// | -pf  -pr  -pu  1 |
+	// | r_x  u_x  f_x  0 |
+	// | r_y  u_y  f_y  0 |
+	// | r_z  u_z  f_z  0 |
+	// | -pr  -pu  -pf  1 |
 	return FMatrix({
-		{ forward.X, right.X, up.X, 0.0f },
-		{ forward.Y, right.Y, up.Y, 0.0f },
-		{ forward.Z, right.Z, up.Z, 0.0f },
-		{ -mCameraPosition.Dot(forward), -mCameraPosition.Dot(right), -mCameraPosition.Dot(up), 1.0f }
+		{ right.X, up.X, forward.X, 0.0f },
+		{ right.Y, up.Y, forward.Y, 0.0f },
+		{ right.Z, up.Z, forward.Z, 0.0f },
+		{ -mCameraPosition.Dot(right), -mCameraPosition.Dot(up), -mCameraPosition.Dot(forward), 1.0f }
 		});
 }
 
