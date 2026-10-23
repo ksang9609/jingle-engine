@@ -21,7 +21,7 @@ public:
 	FVector operator/(const float& f) const;
 
 	void Normalize();
-	[[nodiscard]] FVector Normalized() const;
+	[[nodiscard]] FVector GetNormalized() const;
 
 	float Dot(const FVector& v) const;
 	static float Dot(const FVector& vA, const FVector& vB);

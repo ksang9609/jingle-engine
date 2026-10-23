@@ -91,7 +91,7 @@ TResult<FMatrix::NativeMatrix, FString> FMatrix::getInverseMatrix() const
 // | 0  1  0  0 |
 // | 0  0  1  0 |
 // | tx ty tz 1 |
-FMatrix FMatrix::Translation(const FVector& translation)
+FMatrix FMatrix::MakeTranslationMatrix(const FVector& translation)
 {
 	return FMatrix(NativeMatrix::CreateTranslation(
 		translation.X, translation.Y, translation.Z));
@@ -102,7 +102,7 @@ FMatrix FMatrix::Translation(const FVector& translation)
 // | r20 r21 r22 0 |
 // | 0   0   0   1 |
 // rotation must be normalized
-FMatrix FMatrix::Rotation(const FQuat& rotation)
+FMatrix FMatrix::MakeRotationMatrix(const FQuat& rotation)
 {
 	const DirectX::SimpleMath::Quaternion q(
 		rotation.X, rotation.Y, rotation.Z, rotation.W
@@ -115,7 +115,7 @@ FMatrix FMatrix::Rotation(const FQuat& rotation)
 // | 0  sy 0  0 |
 // | 0  0  sz 0 |
 // | 0  0  0  1 |
-FMatrix FMatrix::Scale(const FVector& scale)
+FMatrix FMatrix::MakeScaleMatrix(const FVector& scale)
 {
 	return FMatrix(NativeMatrix::CreateScale(
 		scale.X, scale.Y, scale.Z));

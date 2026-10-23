@@ -24,9 +24,9 @@ public:
 	[[nodiscard]] TResult<FMatrix, FString> GetInverse() const;
 	[[nodiscard]] TResult<void, FString> Invert();
 
-	[[nodiscard]] static FMatrix Translation(const FVector& translation);
-	[[nodiscard]] static FMatrix Rotation(const FQuat& rotation);
-	[[nodiscard]] static FMatrix Scale(const FVector& scale);
+	[[nodiscard]] static FMatrix MakeTranslationMatrix(const FVector& translation);
+	[[nodiscard]] static FMatrix MakeRotationMatrix(const FQuat& rotation);
+	[[nodiscard]] static FMatrix MakeScaleMatrix(const FVector& scale);
 
 	/* Operators */
 	float* operator[](std::size_t row);

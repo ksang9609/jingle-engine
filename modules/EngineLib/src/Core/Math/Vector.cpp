@@ -66,7 +66,7 @@ void FVector::Normalize()
 	Z /= len;
 }
 
-FVector FVector::Normalized() const
+FVector FVector::GetNormalized() const
 {
 	float len = Length();
 	return FVector{ X / len, Y / len, Z / len };
