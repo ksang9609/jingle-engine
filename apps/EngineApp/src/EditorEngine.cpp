@@ -15,6 +15,8 @@
 
 #include "Core/ConsoleLogger.h"
 #include "Core/EngineStatics.h"
+#include "Core/Math/MathTypes.h"
+#include "Core/Math/Transform.h"
 #include "EngineApp/EditorEngine.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/Primitives/Sphere.h"
@@ -24,6 +26,7 @@
 
 FEditorEngine::FEditorEngine()
 	: mRenderer(nullptr)
+	, mEditorViewportCamera()
 	, mUiManager(nullptr)
 	, mVertexBuffer(nullptr)
 	, mEngineTimer(120) // target FPS
@@ -51,6 +54,11 @@ void FEditorEngine::Init(HWND hWindow)
 	mVertexBuffer = mRenderer->CreateVertexBuffer(SPHERE_VERTICES, sizeof(SPHERE_VERTICES));
 
 	mbIsInitialized = true;
+
+	// Initialize camera
+	mEditorViewportCamera
+		.SetPosition(FVector(-5.0f, 0.0f, 0.0f))
+		.SetRotation(FRotator(0.0f, 0.0f, 0.0f));
 }
 
 bool FEditorEngine::Update()
@@ -76,9 +84,20 @@ bool FEditorEngine::Update()
 
 	/* Rendering */
 	{
+		static FTransform transform(
+			FVector(0.0f, 2.0f, 0.0f), FQuat::Identity, FVector(1.0f, 1.0f, 1.0f)
+		);
+
+		const ImVec2 viewportSize = mRenderer->GetViewportSize();
+		const float aspectRatio = viewportSize.x / viewportSize.y;
+		const FMatrix worldMatrix = transform.GetWorldMatrix();
+		const FMatrix viewProjectionMatrix = 
+			mEditorViewportCamera.GetViewMatrix()
+			* mEditorViewportCamera.GetProjectionMatrix(aspectRatio);
+
 		mRenderer->Prepare();
 		mRenderer->PrepareShader();
-		mRenderer->UpdateConstant(FVector(0.0f, 0.0f, 0.0f), FVector(1.0f, 1.0f, 1.0f));
+		mRenderer->UpdateConstant(worldMatrix, viewProjectionMatrix);
 		mRenderer->RenderPrimitive(*mVertexBuffer, sizeof(SPHERE_VERTICES) / sizeof(FVertexSimple));
 
 		mUiManager->Render(mRenderer->GetViewportBufferSRV());

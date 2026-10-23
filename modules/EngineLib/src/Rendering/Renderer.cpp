@@ -89,8 +89,8 @@ void URenderer::SwapBuffer()
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 	ImGui::Begin("Viewport");
-	ImVec2 size = ImGui::GetContentRegionAvail();
-	ImGui::Image((ImTextureID)mViewportBufferSRV, size);
+	mViewportSize = ImGui::GetContentRegionAvail();
+	ImGui::Image((ImTextureID)mViewportBufferSRV, mViewportSize);
 	ImGui::End();
 	ImGui::PopStyleVar();
 
@@ -134,7 +134,7 @@ void URenderer::RenderPrimitive(ID3D11Buffer& vertexBuffer, UINT numVertices)
 	mDeviceContext->Draw(numVertices, 0);
 }
 
-void URenderer::UpdateConstant(const FVector& location, const FVector& scale)
+void URenderer::UpdateConstant(const FMatrix& worldMatrix, const FMatrix& viewMatrix)
 {
 	if (mConstantBuffer)
 	{
@@ -143,8 +143,8 @@ void URenderer::UpdateConstant(const FVector& location, const FVector& scale)
 		mDeviceContext->Map(mConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &constantbufferMSR);
 		FConstants* constants = reinterpret_cast<FConstants*>(constantbufferMSR.pData);
 
-		constants->Location = location;
-		constants->Scale = scale;
+		constants->WorldMatrix = worldMatrix;
+		constants->ViewMatrix = viewMatrix;
 
 		mDeviceContext->Unmap(mConstantBuffer, 0);
 	}

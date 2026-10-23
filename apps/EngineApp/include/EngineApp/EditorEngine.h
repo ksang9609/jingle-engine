@@ -4,6 +4,7 @@
 #include <d3d11.h>
 
 #include "EngineTimer.h"
+#include "Core/Math/Camera.h"
 
 class URenderer;
 class FEditorUiManager;
@@ -24,6 +25,8 @@ private:
 	/* Managers */
 	// TODO: Wrap renderer by GraphicsManager
 	URenderer* mRenderer;
+	FCamera mEditorViewportCamera;
+
 	FEditorUiManager* mUiManager;
 
 	// TODO: Move this to a separate class, e.g., GpuResourceManager

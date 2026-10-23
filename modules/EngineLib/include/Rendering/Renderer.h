@@ -11,6 +11,7 @@
 #include <d3dcompiler.h>
 
 #include "Core/Math/Vector.h"
+#include "Core/Math/Matrix.h"
 
 #include "VertexLayout.h"
 
@@ -18,12 +19,10 @@ class URenderer final
 {
 public:
 	// Constant buffer
-	struct FConstants
+	struct alignas(16) FConstants
 	{
-		FVector Location;
-		float Pad0;
-		FVector Scale;
-		float Pad1;
+		FMatrix WorldMatrix;
+		FMatrix ViewMatrix;
 	};
 
 	URenderer(HWND hWindow);
@@ -36,12 +35,28 @@ public:
 	void Prepare();
 	void PrepareShader();
 	void RenderPrimitive(ID3D11Buffer& vertexBuffer, UINT numVertices);
-	void UpdateConstant(const FVector& location, const FVector& scale);
+	void UpdateConstant(const FMatrix& worldMatrix, const FMatrix& viewMatrix);
 
 	/* Getter */
 	ID3D11Device* GetDevice() const { return mDevice; }
 	ID3D11DeviceContext* GetDeviceContext() const { return mDeviceContext; }
 	ID3D11ShaderResourceView* GetViewportBufferSRV() const { return mViewportBufferSRV; }
+
+	// Temp
+	ImVec2 GetViewportSize() const { return mViewportSize; }
+private:
+	void createDeviceAndSwapChain(HWND hWindow);
+	void releaseDeviceAndSwapChain();
+	void createFrameBuffer();
+	void releaseFrameBuffer();
+	void createViewportBuffer();
+	void releaseViewportBuffer();
+	void createRaterizerState();
+	void releaseRasterizerState();
+	void createShader();
+	void releaseShader();
+	void createConstantBuffer();
+	void releaseConstantBuffer();
 
 private:
 	// Pointers to manage Direct3D 11 device, device context, and swap chain
@@ -70,17 +85,6 @@ private:
 	/* Internal State */
 	bool mIsReleased;
 
-	/* Member Functions */
-	void createDeviceAndSwapChain(HWND hWindow);
-	void releaseDeviceAndSwapChain();
-	void createFrameBuffer();
-	void releaseFrameBuffer();
-	void createViewportBuffer();
-	void releaseViewportBuffer();
-	void createRaterizerState();
-	void releaseRasterizerState();
-	void createShader();
-	void releaseShader();
-	void createConstantBuffer();
-	void releaseConstantBuffer();
+	// Temp
+	ImVec2 mViewportSize;
 };
