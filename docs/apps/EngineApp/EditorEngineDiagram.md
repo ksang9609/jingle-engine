@@ -12,8 +12,9 @@ namespace Rendering {
 	class URenderer
 }
 
-namespace EditorUI {
+namespace Editor {
 	class FEditorUiManager
+	class FEditorViewport
 }
 
 namespace Core.Math {
@@ -23,6 +24,7 @@ namespace Core.Math {
 EditorEngine *-- FEngineTimer
 EditorEngine *-- URenderer
 EditorEngine *-- FEditorUiManager
+EditorEngine *-- FEditorViewport
 EditorEngine *-- FCamera
 
 ```

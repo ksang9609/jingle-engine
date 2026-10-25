@@ -34,13 +34,13 @@ public:
 	void SwapBuffer();
 	void Prepare();
 	void PrepareShader();
+	void BindViewportRTV(ID3D11RenderTargetView& viewportRTV, float32 width, float32 height);
 	void RenderPrimitive(ID3D11Buffer& vertexBuffer, UINT numVertices);
 	void UpdateConstant(const FMatrix& worldMatrix, const FMatrix& viewMatrix);
 
 	/* Getter */
 	ID3D11Device* GetDevice() const { return mDevice; }
 	ID3D11DeviceContext* GetDeviceContext() const { return mDeviceContext; }
-	ID3D11ShaderResourceView* GetViewportBufferSRV() const { return mViewportBufferSRV; }
 
 	// Temp
 	ImVec2 GetViewportSize() const { return mViewportSize; }
@@ -49,8 +49,6 @@ private:
 	void releaseDeviceAndSwapChain();
 	void createFrameBuffer();
 	void releaseFrameBuffer();
-	void createViewportBuffer();
-	void releaseViewportBuffer();
 	void createRaterizerState();
 	void releaseRasterizerState();
 	void createShader();
@@ -69,9 +67,7 @@ private:
 	ID3D11RenderTargetView* mFrameBufferRTV = nullptr;
 	ID3D11RasterizerState* mRasterizerState = nullptr;
 	ID3D11Buffer* mConstantBuffer = nullptr;
-	ID3D11Texture2D* mViewportBuffer = nullptr;
-	ID3D11RenderTargetView* mViewportBufferRTV = nullptr;
-	ID3D11ShaderResourceView* mViewportBufferSRV = nullptr;
+	ID3D11RenderTargetView* mCurrentViewportBufferRTVRef = nullptr;
 
 	FLOAT mClearColor[4] = { 0.025f, 0.025f, 0.025f, 1.0f };
 	D3D11_VIEWPORT mViewportInfo;

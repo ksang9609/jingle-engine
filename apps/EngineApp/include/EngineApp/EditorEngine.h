@@ -8,6 +8,7 @@
 
 class URenderer;
 class FEditorUiManager;
+class FEditorViewport;
 
 class FEditorEngine final
 {
@@ -26,6 +27,7 @@ private:
 	// TODO: Wrap renderer by GraphicsManager
 	URenderer* mRenderer;
 	FCamera mEditorViewportCamera;
+	FEditorViewport* mEditorViewport;
 
 	FEditorUiManager* mUiManager;
 

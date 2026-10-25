@@ -28,7 +28,6 @@ URenderer::URenderer(HWND hWindow)
 	createRaterizerState();
 	createShader();
 	createConstantBuffer();
-	createViewportBuffer();
 }
 
 URenderer::~URenderer()
@@ -43,7 +42,6 @@ void URenderer::Release()
 		return;
 	}
 
-	releaseViewportBuffer();
 	releaseRasterizerState();
 	releaseConstantBuffer();
 	releaseShader();
@@ -87,13 +85,6 @@ void URenderer::SwapBuffer()
 {
 	mDeviceContext->OMSetRenderTargets(1, &mFrameBufferRTV, nullptr);
 
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-	ImGui::Begin("Viewport");
-	mViewportSize = ImGui::GetContentRegionAvail();
-	ImGui::Image((ImTextureID)mViewportBufferSRV, mViewportSize);
-	ImGui::End();
-	ImGui::PopStyleVar();
-
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
@@ -103,14 +94,14 @@ void URenderer::SwapBuffer()
 void URenderer::Prepare()
 {
 	mDeviceContext->ClearRenderTargetView(mFrameBufferRTV, mClearColor);
-	mDeviceContext->ClearRenderTargetView(mViewportBufferRTV, mClearColor);
+	mDeviceContext->ClearRenderTargetView(mCurrentViewportBufferRTVRef, mClearColor);
 
 	mDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	mDeviceContext->RSSetViewports(1, &mViewportInfo);
+	//mDeviceContext->RSSetViewports(1, &mViewportInfo);
 	mDeviceContext->RSSetState(mRasterizerState);
 
-	mDeviceContext->OMSetRenderTargets(1, &mViewportBufferRTV, nullptr);
+	//mDeviceContext->OMSetRenderTargets(1, &mViewportBufferRTV, nullptr);
 	mDeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 }
 
@@ -124,6 +115,28 @@ void URenderer::PrepareShader()
 	{
 		mDeviceContext->VSSetConstantBuffers(0, 1, &mConstantBuffer);
 	}
+}
+
+void URenderer::BindViewportRTV(
+	ID3D11RenderTargetView& viewportRTV,
+	float32 width,
+	float32 height
+	)
+{
+	auto* viewportRTVRef = &viewportRTV;
+
+	D3D11_VIEWPORT gpuViewport = {
+		.TopLeftX = 0.0f,
+		.TopLeftY = 0.0f,
+		.Width = width,
+		.Height = height,
+		.MinDepth = 0.0f,
+		.MaxDepth = 1.0f,
+	};
+
+	mDeviceContext->OMSetRenderTargets(1, &viewportRTVRef, nullptr);
+	mDeviceContext->RSSetViewports(1, &gpuViewport);
+	mCurrentViewportBufferRTVRef = viewportRTVRef;
 }
 
 void URenderer::RenderPrimitive(ID3D11Buffer& vertexBuffer, UINT numVertices)
@@ -234,80 +247,6 @@ void URenderer::releaseFrameBuffer()
 	{
 		mFrameBuffer->Release();
 		mFrameBuffer = nullptr;
-	}
-}
-
-void URenderer::createViewportBuffer()
-{
-	D3D11_TEXTURE2D_DESC viewportBufferDesc = {
-		.Width = static_cast<UINT>(mViewportInfo.Width),
-		.Height = static_cast<UINT>(mViewportInfo.Height),
-		.MipLevels = 1,
-		.ArraySize = 1,
-		.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
-		.SampleDesc = {
-			.Count = 1,
-			.Quality = 0,
-		},
-		.Usage = D3D11_USAGE_DEFAULT,
-		.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
-		.CPUAccessFlags = 0,
-		.MiscFlags = 0,
-	};
-
-	HRESULT hr = mDevice->CreateTexture2D(&viewportBufferDesc, nullptr, &mViewportBuffer);
-	if (FAILED(hr))
-	{
-		assert(false);
-		return;
-
-	}
-
-	D3D11_RENDER_TARGET_VIEW_DESC viewportBufferRTVdesc = {
-		.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
-		.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
-	};
-
-	hr = mDevice->CreateRenderTargetView(mViewportBuffer, &viewportBufferRTVdesc, &mViewportBufferRTV);
-	if (FAILED(hr))
-	{
-		assert(false);
-		return;
-	}
-
-	D3D11_SHADER_RESOURCE_VIEW_DESC viewportBufferSRVdesc = {
-		.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
-		.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D,
-		.Texture2D = {
-			.MostDetailedMip = 0,
-			.MipLevels = 1,
-		},
-	};
-
-	hr = mDevice->CreateShaderResourceView(mViewportBuffer, &viewportBufferSRVdesc, &mViewportBufferSRV);
-	if (FAILED(hr))
-	{
-		assert(false);
-		return;
-	}
-}
-
-void URenderer::releaseViewportBuffer()
-{
-	if (mViewportBufferSRV)
-	{
-		mViewportBufferSRV->Release();
-		mViewportBufferSRV = nullptr;
-	}
-	if (mViewportBufferRTV)
-	{
-		mViewportBufferRTV->Release();
-		mViewportBufferRTV = nullptr;
-	}
-	if (mViewportBuffer)
-	{
-		mViewportBuffer->Release();
-		mViewportBuffer = nullptr;
 	}
 }
 

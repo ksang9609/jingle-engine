@@ -21,12 +21,14 @@
 #include "Rendering/Renderer.h"
 #include "Rendering/Primitives/Sphere.h"
 #include "Editor/UI/EditorUiManager.h"
+#include "Editor/EditorViewport.h"
 
 #include "Object/Object.h"
 
 FEditorEngine::FEditorEngine()
 	: mRenderer(nullptr)
 	, mEditorViewportCamera()
+	, mEditorViewport(nullptr)
 	, mUiManager(nullptr)
 	, mVertexBuffer(nullptr)
 	, mEngineTimer(120) // target FPS
@@ -84,23 +86,37 @@ bool FEditorEngine::Update()
 
 	/* Rendering */
 	{
+		mUiManager->BeginFrame();
+		mEditorViewport->BeginPanel();
+
 		static FTransform transform(
 			FVector(0.0f, 2.0f, 0.0f), FQuat::Identity, FVector(1.0f, 1.0f, 1.0f)
 		);
 
-		const ImVec2 viewportSize = mRenderer->GetViewportSize();
-		const float aspectRatio = viewportSize.x / viewportSize.y;
+		const FVector2 viewportSize = mEditorViewport->GetDisplaySize();
+		const float viewportWidth = viewportSize.X;
+		const float viewportHeight = viewportSize.Y;
+		const float aspectRatio = viewportWidth / viewportHeight;
 		const FMatrix worldMatrix = transform.GetWorldMatrix();
 		const FMatrix viewProjectionMatrix = 
 			mEditorViewportCamera.GetViewMatrix()
 			* mEditorViewportCamera.GetProjectionMatrix(aspectRatio);
 
+
+		mRenderer->BindViewportRTV(
+			*mEditorViewport->GetViewportRTV(),
+			viewportWidth,
+			viewportHeight);
+
 		mRenderer->Prepare();
 		mRenderer->PrepareShader();
 		mRenderer->UpdateConstant(worldMatrix, viewProjectionMatrix);
-		mRenderer->RenderPrimitive(*mVertexBuffer, sizeof(SPHERE_VERTICES) / sizeof(FVertexSimple));
 
-		mUiManager->Render(mRenderer->GetViewportBufferSRV());
+		mRenderer->RenderPrimitive(*mVertexBuffer, sizeof(SPHERE_VERTICES) / sizeof(FVertexSimple));
+		mEditorViewport->DrawViewport();
+		mEditorViewport->EndPanel();
+
+		mUiManager->Render();
 
 		mRenderer->SwapBuffer();
 	}
@@ -139,6 +155,14 @@ void FEditorEngine::createManagers(HWND hWindow)
 		mRenderer = new URenderer(hWindow);
 	}
 
+	// Create Editor Viewport
+	if (mEditorViewport == nullptr)
+	{
+		mEditorViewport = new FEditorViewport(
+			*mRenderer->GetDevice()
+		);
+	}
+
 	// Create UI Manager
 	if (mUiManager == nullptr)
 	{
@@ -157,6 +181,11 @@ void FEditorEngine::releaseManagers()
 		mUiManager->Release();
 		delete mUiManager;
 		mUiManager = nullptr;
+	}
+	if (mEditorViewport)
+	{
+		delete mEditorViewport;
+		mEditorViewport = nullptr;
 	}
 	if (mRenderer)
 	{

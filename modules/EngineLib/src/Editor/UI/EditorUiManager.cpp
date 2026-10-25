@@ -35,10 +35,9 @@ FEditorUiManager::~FEditorUiManager()
 	Release();
 }
 
-void FEditorUiManager::Render(ID3D11ShaderResourceView* frameTextureSRV)
+void FEditorUiManager::BeginFrame()
 {
 	assert(mbIsInitialized);
-
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
@@ -46,6 +45,11 @@ void FEditorUiManager::Render(ID3D11ShaderResourceView* frameTextureSRV)
 	ImGui::DockSpaceOverViewport(
 		0, ImGui::GetMainViewport()
 	);
+ }
+
+void FEditorUiManager::Render()
+{
+	assert(mbIsInitialized);
 
 	ImGui::Begin("Jungle Property Window");
 	ImGui::Text("Hello, world!");
