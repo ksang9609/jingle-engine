@@ -24,9 +24,22 @@ public:
 	[[nodiscard]] TResult<FMatrix, FString> GetInverse() const;
 	[[nodiscard]] TResult<void, FString> Invert();
 
-	[[nodiscard]] static FMatrix MakeTranslationMatrix(const FVector& translation);
-	[[nodiscard]] static FMatrix MakeRotationMatrix(const FQuat& rotation);
-	[[nodiscard]] static FMatrix MakeScaleMatrix(const FVector& scale);
+	static FMatrix MakeTranslationMatrix(const FVector& translation);
+	static FMatrix MakeRotationMatrix(const FQuat& rotation);
+	static FMatrix MakeScaleMatrix(const FVector& scale);
+	static FMatrix MakeSRTMatrix(const FVector& translation, const FQuat& rotation, const FVector& scale);
+	static FMatrix MakeViewMatrix(const FVector& eyePosition, const FQuat& rotation);
+	static FMatrix MakePerspectiveProjectionMatrix(
+		float fovYDeg, 
+		float aspectRatio, 
+		float nearPlane, 
+		float farPlane);
+	static FMatrix MakeOrthographicProjectionMatrix(
+		float fovYDeg,
+		float aspectRatio,
+		float orthoDistance,
+		float nearPlane,
+		float farPlane);
 
 	/* Operators */
 	float* operator[](std::size_t row);

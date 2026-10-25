@@ -35,8 +35,6 @@ public:
 	FCamera& SetProjectionType(ECameraProjectionType projectionType);
 
 private:
-	FMatrix getPerspectiveProjectionMatrix(float aspectRatio) const;
-	FMatrix getOrthographicProjectionMatrix(float aspectRatio) const;
 
 private:
 	FVector mCameraPosition;

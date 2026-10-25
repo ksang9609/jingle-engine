@@ -20,20 +20,7 @@ FCamera::FCamera()
 // DirectX:	X (right), Y (up), Z (forward)
 FMatrix FCamera::GetViewMatrix() const
 {
-	const FVector up = mCameraRotation.GetUpVector();
-	const FVector right = mCameraRotation.GetRightVector();
-	const FVector forward = mCameraRotation.GetForwardVector();
-
-	// | r_x  u_x  f_x  0 |
-	// | r_y  u_y  f_y  0 |
-	// | r_z  u_z  f_z  0 |
-	// | -pr  -pu  -pf  1 |
-	return FMatrix({
-		{ right.X, up.X, forward.X, 0.0f },
-		{ right.Y, up.Y, forward.Y, 0.0f },
-		{ right.Z, up.Z, forward.Z, 0.0f },
-		{ -mCameraPosition.Dot(right), -mCameraPosition.Dot(up), -mCameraPosition.Dot(forward), 1.0f }
-		});
+	return FMatrix::MakeViewMatrix(mCameraPosition, mCameraRotation);
 }
 
 FMatrix FCamera::GetProjectionMatrix(float aspectRatio) const
@@ -41,51 +28,22 @@ FMatrix FCamera::GetProjectionMatrix(float aspectRatio) const
 	switch (mProjectionType)
 	{
 	case ECameraProjectionType::Perspective:
-		return getPerspectiveProjectionMatrix(aspectRatio);
+		return FMatrix::MakePerspectiveProjectionMatrix(
+			mFovDeg,
+			aspectRatio,
+			mNearPlane,
+			mFarPlane);
 	case ECameraProjectionType::Orthographic:
-		return getOrthographicProjectionMatrix(aspectRatio);
+		return FMatrix::MakeOrthographicProjectionMatrix(
+			mFovDeg,
+			aspectRatio,
+			mOrthoDistance,
+			mNearPlane,
+			mFarPlane);
 	default:
 		assert(false && "Invalid projection type");
 		return FMatrix::Identity;
 	}
-}
-
-FMatrix FCamera::getPerspectiveProjectionMatrix(float aspectRatio) const
-{
-	const float fovRad = FMath::DegreesToRadians(mFovDeg);
-	const float scaleY = 1.0f / std::tan(fovRad / 2.0f);
-	const float scaleX = scaleY / aspectRatio;
-
-	// | scaleX  0       0                    0 |
-	// | 0       scaleY  0                    0 |
-	// | 0       0       far/(far-near)       1 |
-	// | 0       0       -near*far/(far-near) 0 |
-	return FMatrix({
-		{ scaleX, 0.0f, 0.0f, 0.0f },
-		{ 0.0f, scaleY, 0.0f, 0.0f },
-		{ 0.0f, 0.0f, mFarPlane / (mFarPlane - mNearPlane), 1.0f },
-		{ 0.0f, 0.0f, -mNearPlane * mFarPlane / (mFarPlane - mNearPlane), 0.0f }
-		});
-}
-
-FMatrix FCamera::getOrthographicProjectionMatrix(float aspectRatio) const
-{
-	const float fovRad = FMath::DegreesToRadians(mFovDeg);
-
-	// h = 2d * tan(fov/2)
-	const float height = 2 * mOrthoDistance * std::tan(fovRad / 2);
-	const float width = height * aspectRatio;
-
-	// | 2/width  0        0                    0 |
-	// | 0        2/height 0                    0 |
-	// | 0        0        1/(far-near)         0 |
-	// | 0        0        -near/(far-near)     1 |
-	return FMatrix({
-		{ 2.0f / width, 0.0f, 0.0f, 0.0f },
-		{ 0.0f, 2.0f / height, 0.0f, 0.0f },
-		{ 0.0f, 0.0f, 1.0f / (mFarPlane - mNearPlane), 0.0f },
-		{ 0.0f, 0.0f, -mNearPlane / (mFarPlane - mNearPlane), 1.0f }
-		});
 }
 
 /* ===== Getters/Setters ===== */
