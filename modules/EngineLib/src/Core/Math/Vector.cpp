@@ -87,6 +87,29 @@ FVector operator*(const float& f, const FVector& v)
 	return FVector{ v.X * f, v.Y * f, v.Z * f };
 }
 
+/* ===== FVector2 ===== */
+
+FVector2 FVector2::Zero = FVector2(0, 0);
+FVector2 FVector2::One = FVector2(1, 1);
+
+FVector2::FVector2()
+	: X(0)
+	, Y(0)
+{
+}
+
+FVector2::FVector2(float x, float y)
+	: X(x)
+	, Y(y)
+{
+}
+
+FVector2::FVector2(float n)
+	: X(n)
+	, Y(n)
+{
+}
+
 
 /* ===== FVector4 ===== */
 

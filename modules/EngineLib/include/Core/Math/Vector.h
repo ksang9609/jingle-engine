@@ -37,6 +37,20 @@ using FVector3 = FVector;
 
 static FVector operator*(const float& f, const FVector& v);
 
+class FVector2
+{
+public:
+	float X;
+	float Y;
+
+	FVector2();
+	FVector2(float x, float y);
+	FVector2(float n);
+
+	static FVector2 Zero;
+	static FVector2 One;
+};
+
 class FVector4
 {
 public:
