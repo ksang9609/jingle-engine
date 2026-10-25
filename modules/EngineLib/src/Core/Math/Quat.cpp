@@ -110,10 +110,117 @@ void FQuat::Normalize()
 	*this = GetNormalized();
 }
 
+void FQuat::LookDirection(const FVector& forward)
+{
+	LookDirection(forward, FVector::Up);
+}
+
+void FQuat::LookDirection(const FVector& forward, const FVector& up)
+{
+	auto result = tryMakeLookDirectionQuat(forward, up);
+	if (!result)
+	{
+		// Keep the current quaternion unchanged if the input is invalid
+		return;
+	}
+	else
+	{
+		*this = result.value();
+	}
+}
+
+void FQuat::LookAt(const FVector& eyePosition, const FVector& target)
+{
+	LookAt(eyePosition, target, FVector::Up);
+}
+
+void FQuat::LookAt(const FVector& eyePosition, const FVector& target, const FVector& up)
+{
+	const FVector forward = (target - eyePosition).GetNormalized();
+	LookDirection(forward, up);
+}
+
+FQuat FQuat::MakeLookDirectionQuat(const FVector& forward)
+{
+	return MakeLookDirectionQuat(forward, FVector::Up);
+}
+
+FQuat FQuat::MakeLookDirectionQuat(const FVector& forward, const FVector& up)
+{
+	auto result = tryMakeLookDirectionQuat(forward, up);
+	if (!result)
+	{
+		return FQuat::Identity;
+	}
+	return result.value();
+}
+
+FQuat FQuat::MakeLookAtQuat(const FVector& eyePosition, const FVector& target)
+{
+	return MakeLookAtQuat(eyePosition, target, FVector::Up);
+}
+
+FQuat FQuat::MakeLookAtQuat(const FVector& eyePosition, const FVector& target, const FVector& up)
+{
+	const FVector forward = (target - eyePosition).GetNormalized();
+	return MakeLookDirectionQuat(forward, up);
+}
+
+TResult<FQuat, FString> FQuat::tryMakeLookDirectionQuat(const FVector& forward, const FVector& up)
+{
+	constexpr float epsilonSquared = 1e-8f;
+
+	NativeVector forwardVec(forward.X, forward.Y, forward.Z);
+	NativeVector upVec(up.X, up.Y, up.Z);
+
+	// Return identity quaternion if forward vector is too small
+	const float forwardLengthSquared = forwardVec.LengthSquared();
+	if (!std::isfinite(forwardLengthSquared) ||
+		forwardLengthSquared < epsilonSquared)
+	{
+		return TErr<FString>(FString("Forward vector is too small or invalid."));
+	}
+	forwardVec.Normalize();
+
+	// Replace up vector to world up (0, 0, 1) if up vector is not valid
+	const float upLengthSquared = upVec.LengthSquared();
+	if (!std::isfinite(upLengthSquared) ||
+		upLengthSquared < epsilonSquared)
+	{
+		upVec = NativeVector::UnitZ;
+	}
+	else
+	{
+		upVec.Normalize();
+	}
+
+	NativeVector rightVec = upVec.Cross(forwardVec);
+
+	if (rightVec.LengthSquared() <= epsilonSquared)
+	{
+		upVec = (std::abs((forwardVec.z)) < 0.9f)
+			? NativeVector::UnitZ
+			: NativeVector::UnitY;
+
+		rightVec = upVec.Cross(forwardVec);
+	}
+	rightVec.Normalize();
+
+	// Recompute up vector to ensure orthogonality
+	upVec = forwardVec.Cross(rightVec);
+	upVec.Normalize();
+
+	const NativeMatrix rotation(forwardVec, rightVec, upVec);
+
+	NativeQuaternion q =
+		NativeQuaternion::CreateFromRotationMatrix(rotation);
+
+	q.Normalize();
+	return FQuat(q);
+}
+
 FVector FQuat::GetAxisVector(EAxis axis) const
 {
-	using NativeVector = DirectX::SimpleMath::Vector3;
-
 	const NativeQuaternion rotation = toNative();
 
 	NativeVector result;

@@ -103,7 +103,7 @@ TResult<void, FString> FEditorViewport::createViewportResources(uint32 width, UI
 	HRESULT hr = mDeviceRef->CreateTexture2D(&viewportBufferDesc, nullptr, &mViewportTexture);
 	if (FAILED(hr))
 	{
-		return TErr(FString("Failed to create viewport texture."
+		return TErr<FString>(FString("Failed to create viewport texture."
 			"error code: " + std::to_string(hr)
 		));
 	}
@@ -116,7 +116,7 @@ TResult<void, FString> FEditorViewport::createViewportResources(uint32 width, UI
 	hr = mDeviceRef->CreateRenderTargetView(mViewportTexture, &viewportBufferRTVdesc, &mViewportRTV);
 	if (FAILED(hr))
 	{
-		return TErr(FString("Failed to create viewport render target view."
+		return TErr<FString>(FString("Failed to create viewport render target view."
 			"error code: " + std::to_string(hr)
 		));
 	}
@@ -133,7 +133,7 @@ TResult<void, FString> FEditorViewport::createViewportResources(uint32 width, UI
 	hr = mDeviceRef->CreateShaderResourceView(mViewportTexture, &viewportBufferSRVdesc, &mViewportSRV);
 	if (FAILED(hr))
 	{
-		return TErr(FString("Failed to create viewport shader resource view."
+		return TErr<FString>(FString("Failed to create viewport shader resource view."
 			"error code: " + std::to_string(hr)
 		));
 	}

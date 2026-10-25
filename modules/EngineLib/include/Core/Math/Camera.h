@@ -18,6 +18,9 @@ public:
 	FMatrix GetViewMatrix() const;
 	FMatrix GetProjectionMatrix(float aspectRatio) const;
 
+	FCamera& LookDirection(const FVector& forward);
+	FCamera& LookAt(const FVector& target);
+
 	/* Getters/Setters */
 	FVector GetPosition() const;
 	FCamera& SetPosition(const FVector& position);
@@ -35,7 +38,7 @@ public:
 	FCamera& SetProjectionType(ECameraProjectionType projectionType);
 
 private:
-
+	
 private:
 	FVector mCameraPosition;
 	FQuat mCameraRotation;

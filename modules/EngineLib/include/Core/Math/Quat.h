@@ -3,6 +3,7 @@
 
 #include <SimpleMath/SimpleMath.h>
 
+#include "Core/Core.h"
 #include "Core/Math/MathEnums.h"
 
 class FRotator;
@@ -10,7 +11,9 @@ class FVector;
 class FQuat
 {
 private:
+	using NativeVector = DirectX::SimpleMath::Vector3;
 	using NativeQuaternion = DirectX::SimpleMath::Quaternion;
+	using NativeMatrix = DirectX::SimpleMath::Matrix;
 public:
 	float X;
 	float Y;
@@ -24,6 +27,16 @@ public:
 	FRotator ToRotator() const;
 	[[nodiscard]] FQuat GetNormalized() const;
 	void Normalize();
+
+	void LookDirection(const FVector& forward);	// use world up (0, 0, 1)
+	void LookDirection(const FVector& forward, const FVector& up);
+	void LookAt(const FVector& eyePosition, const FVector& target);			// use world up (0, 0, 1)
+	void LookAt(const FVector& eyePosition, const FVector& target, const FVector& up);
+
+	static FQuat MakeLookDirectionQuat(const FVector& forward);	// use world up (0, 0, 1)
+	static FQuat MakeLookDirectionQuat(const FVector& forward, const FVector& up);
+	static FQuat MakeLookAtQuat(const FVector& eyePosition, const FVector& target);	// use world up (0, 0, 1)
+	static FQuat MakeLookAtQuat(const FVector& eyePosition, const FVector& target, const FVector& up);
 
 	FVector GetAxisVector(EAxis axis) const;
 	FVector GetForwardVector() const;
@@ -42,4 +55,6 @@ public:
 private:
 	FQuat(const NativeQuaternion& q);
 	NativeQuaternion toNative() const;
+
+	static TResult<FQuat, FString> tryMakeLookDirectionQuat(const FVector& forward, const FVector& up);
 };

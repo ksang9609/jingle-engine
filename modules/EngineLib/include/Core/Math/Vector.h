@@ -28,6 +28,9 @@ public:
 
 	static FVector Zero;
 	static FVector One;
+	static FVector Forward;
+	static FVector Right;
+	static FVector Up;
 
 private:
 

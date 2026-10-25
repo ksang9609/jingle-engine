@@ -46,6 +46,18 @@ FMatrix FCamera::GetProjectionMatrix(float aspectRatio) const
 	}
 }
 
+FCamera& FCamera::LookDirection(const FVector& forward)
+{
+	mCameraRotation.LookDirection(forward);
+	return *this;
+}
+
+FCamera& FCamera::LookAt(const FVector& target)
+{
+	mCameraRotation.LookAt(mCameraPosition, target);
+	return *this;
+}
+
 /* ===== Getters/Setters ===== */
 FVector FCamera::GetPosition() const
 {

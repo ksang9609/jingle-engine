@@ -6,6 +6,9 @@
 
 FVector FVector::Zero = FVector(0, 0, 0);
 FVector FVector::One = FVector(1, 1, 1);
+FVector FVector::Forward = FVector(1, 0, 0);
+FVector FVector::Right = FVector(0, 1, 0);
+FVector FVector::Up = FVector(0, 0, 1);
 
 FVector::FVector(float x, float y, float z)
 	: X(x)

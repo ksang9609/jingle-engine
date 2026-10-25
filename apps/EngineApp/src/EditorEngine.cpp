@@ -60,7 +60,7 @@ void FEditorEngine::Init(HWND hWindow)
 	// Initialize camera
 	mEditorViewportCamera
 		.SetPosition(FVector(-5.0f, 0.0f, 0.0f))
-		.SetRotation(FRotator(0.0f, 0.0f, 0.0f));
+		.LookAt(FVector(0.0f, 2.0f, 0.0f));
 }
 
 bool FEditorEngine::Update()
