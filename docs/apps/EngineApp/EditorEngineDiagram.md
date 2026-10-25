@@ -16,8 +16,13 @@ namespace EditorUI {
 	class FEditorUiManager
 }
 
+namespace Core.Math {
+	class FCamera
+}
+
 EditorEngine *-- FEngineTimer
 EditorEngine *-- URenderer
 EditorEngine *-- FEditorUiManager
+EditorEngine *-- FCamera
 
 ```
