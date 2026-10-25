@@ -9,8 +9,9 @@
 #include <ImGui/imgui_impl_dx11.h>
 #include <ImGui/imgui_impl_win32.h>
 
-FEditorUiManager::FEditorUiManager(HWND hWnd, ID3D11Device* device, ID3D11DeviceContext* context)
+FEditorUiManager::FEditorUiManager(HWND hWnd, ID3D11Device* device, ID3D11DeviceContext* context, FCamera& CameraRef)
 	: mConsoleWindow()
+	, mControlPanel({ CameraRef })
 	, mbIsInitialized(false)
 	, mbIsReleased(false)
 {
@@ -45,7 +46,7 @@ void FEditorUiManager::BeginFrame()
 	ImGui::DockSpaceOverViewport(
 		0, ImGui::GetMainViewport()
 	);
- }
+}
 
 void FEditorUiManager::Render()
 {
@@ -56,7 +57,7 @@ void FEditorUiManager::Render()
 	ImGui::End();
 
 	mConsoleWindow.DrawWindow();
-
+	mControlPanel.DrawPanel();
 }
 
 void FEditorUiManager::Release()
@@ -70,6 +71,6 @@ void FEditorUiManager::Release()
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
-	
+
 	mbIsReleased = true;
 }

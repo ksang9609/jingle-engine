@@ -6,12 +6,13 @@
 
 #include "Core/Core.h"
 #include "Editor/UI/ConsoleWindow.h"
+#include "Editor/UI/ControlPanel.h"
 
 class FEditorUiManager final
 {
 public:
 	// TODO: Wrap device and device context in a class and pass it to the constructor
-	FEditorUiManager(HWND hWnd, ID3D11Device* device, ID3D11DeviceContext* context);
+	FEditorUiManager(HWND hWnd, ID3D11Device* device, ID3D11DeviceContext* context, FCamera& CameraRef);
 	~FEditorUiManager();
 
 	void BeginFrame();
@@ -21,6 +22,7 @@ public:
 private:
 	/* Windows */
 	FConsoleWindow mConsoleWindow;
+	FControlPanel mControlPanel;
 
 	/* Internal States */
 	bool mbIsInitialized;

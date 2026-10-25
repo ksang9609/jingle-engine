@@ -56,11 +56,6 @@ void FEditorEngine::Init(HWND hWindow)
 	mVertexBuffer = mRenderer->CreateVertexBuffer(SPHERE_VERTICES, sizeof(SPHERE_VERTICES));
 
 	mbIsInitialized = true;
-
-	// Initialize camera
-	mEditorViewportCamera
-		.SetPosition(FVector(-5.0f, 0.0f, 0.0f))
-		.LookAt(FVector(0.0f, 2.0f, 0.0f));
 }
 
 bool FEditorEngine::Update()
@@ -149,6 +144,11 @@ void FEditorEngine::End()
 
 void FEditorEngine::createManagers(HWND hWindow)
 {
+	// Initialize camera
+	mEditorViewportCamera
+		.SetPosition(FVector(-5.0f, 0.0f, 0.0f))
+		.LookAt(FVector(0.0f, 2.0f, 0.0f));
+
 	// Create Renderer
 	if (mRenderer == nullptr)
 	{
@@ -169,7 +169,8 @@ void FEditorEngine::createManagers(HWND hWindow)
 		mUiManager = new FEditorUiManager(
 			hWindow,
 			mRenderer->GetDevice(),
-			mRenderer->GetDeviceContext()
+			mRenderer->GetDeviceContext(),
+			mEditorViewportCamera
 		);
 	}
 }
