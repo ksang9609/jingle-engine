@@ -1,16 +1,13 @@
 // Editor/EditorViewport.cpp
 #include "Editor/EditorViewport.h"
 
-#include <ImGui/imgui.h>
-#include <ImGui/imgui_impl_dx11.h>
+#include <cassert>
 
 FEditorViewport::FEditorViewport(ID3D11Device& deviceRef)
 	: mDeviceRef(&deviceRef)
 	, mViewportTexture(nullptr)
 	, mViewportRTV(nullptr)
 	, mViewportSRV(nullptr)
-	, mImagePosition(FVector2::Zero)
-	, mDisplaySize(FVector2::Zero)
 	, mRenderWidth(0)
 	, mRenderHeight(0)
 {
@@ -21,46 +18,16 @@ FEditorViewport::~FEditorViewport()
 	releaseViewportResources();
 }
 
-void FEditorViewport::BeginPanel()
-{
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-	ImGui::Begin("Viewport");
-
-	mImagePosition = FVector2(
-		ImGui::GetCursorScreenPos().x,
-		ImGui::GetCursorScreenPos().y);
-	mDisplaySize = FVector2(
-		ImGui::GetContentRegionAvail().x,
-		ImGui::GetContentRegionAvail().y);
-
-	if (!ensureViewportSize())
-	{
-		assert(false);
-		return;
-	}
-}
-
-void FEditorViewport::DrawViewport()
-{
-	ImGui::Image((ImTextureID)mViewportSRV, ImVec2(mDisplaySize.X, mDisplaySize.Y));
-}
-
-void FEditorViewport::EndPanel()
-{
-	ImGui::End();
-	ImGui::PopStyleVar();
-}
-
-bool FEditorViewport::ensureViewportSize()
+bool FEditorViewport::EnsureViewportSize(float width, float height)
 {
 	assert(mDeviceRef);
-	if (mDisplaySize.X <= 0 || mDisplaySize.Y <= 0)
+	if (width <= 0 || height <= 0)
 	{
 		return false;
 	}
 
-	if (mDisplaySize.X == mRenderWidth &&
-		mDisplaySize.Y == mRenderHeight)
+	if (width == mRenderWidth &&
+		height == mRenderHeight)
 	{
 		return true;
 	}
@@ -69,8 +36,8 @@ bool FEditorViewport::ensureViewportSize()
 	releaseViewportResources();
 
 	// Create new resources
-	mRenderWidth = static_cast<uint32>(mDisplaySize.X);
-	mRenderHeight = static_cast<uint32>(mDisplaySize.Y);
+	mRenderWidth = static_cast<uint32>(width);
+	mRenderHeight = static_cast<uint32>(height);
 
 	auto result = createViewportResources(mRenderWidth, mRenderHeight);
 	if (!result)

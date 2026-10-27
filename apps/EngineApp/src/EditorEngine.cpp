@@ -82,34 +82,33 @@ bool FEditorEngine::Update()
 	/* Rendering */
 	{
 		mUiManager->BeginFrame();
-		mEditorViewport->BeginPanel();
 
 		static FTransform transform(
 			FVector(0.0f, 2.0f, 0.0f), FQuat::Identity, FVector(1.0f, 1.0f, 1.0f)
 		);
 
-		const FVector2 viewportSize = mEditorViewport->GetDisplaySize();
+		const FVector2 viewportSize = mUiManager->GetViewportDisplaySize();
 		const float viewportWidth = viewportSize.X;
 		const float viewportHeight = viewportSize.Y;
-		const float aspectRatio = viewportWidth / viewportHeight;
+		const float aspectRatio = mUiManager->GetViewportAspectRatio();
 		const FMatrix worldMatrix = transform.GetWorldMatrix();
-		const FMatrix viewProjectionMatrix = 
+		const FMatrix viewProjectionMatrix =
 			mEditorViewportCamera.GetViewMatrix()
 			* mEditorViewportCamera.GetProjectionMatrix(aspectRatio);
 
+		// Draw the scene to the viewport render target
+		{
+			mRenderer->BindViewportRTV(
+				*mEditorViewport->GetViewportRTV(),
+				viewportWidth,
+				viewportHeight);
 
-		mRenderer->BindViewportRTV(
-			*mEditorViewport->GetViewportRTV(),
-			viewportWidth,
-			viewportHeight);
+			mRenderer->Prepare();
+			mRenderer->PrepareShader();
+			mRenderer->UpdateConstant(worldMatrix, viewProjectionMatrix);
 
-		mRenderer->Prepare();
-		mRenderer->PrepareShader();
-		mRenderer->UpdateConstant(worldMatrix, viewProjectionMatrix);
-
-		mRenderer->RenderPrimitive(*mVertexBuffer, sizeof(SPHERE_VERTICES) / sizeof(FVertexSimple));
-		mEditorViewport->DrawViewport();
-		mEditorViewport->EndPanel();
+			mRenderer->RenderPrimitive(*mVertexBuffer, sizeof(SPHERE_VERTICES) / sizeof(FVertexSimple));
+		}
 
 		mUiManager->Render();
 
@@ -166,12 +165,13 @@ void FEditorEngine::createManagers(HWND hWindow)
 	// Create UI Manager
 	if (mUiManager == nullptr)
 	{
-		mUiManager = new FEditorUiManager(
-			hWindow,
-			mRenderer->GetDevice(),
-			mRenderer->GetDeviceContext(),
-			mEditorViewportCamera
-		);
+		mUiManager = new FEditorUiManager({
+			.HWnd = hWindow,
+			.DeviceRef = *mRenderer->GetDevice(),
+			.ContextRef = *mRenderer->GetDeviceContext(),
+			.CameraRef = mEditorViewportCamera,
+			.EditorViewportRef = *mEditorViewport
+			});
 	}
 }
 
