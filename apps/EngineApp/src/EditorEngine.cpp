@@ -20,17 +20,23 @@
 #include "EngineApp/EditorEngine.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/Primitives/Sphere.h"
+#include "Rendering/Primitives/Cube.h"
 #include "Editor/UI/EditorUiManager.h"
 #include "Editor/EditorViewport.h"
 
 #include "Object/Object.h"
+#include "Object/SceneComponent.h"
+#include "Object/PrimitiveComponent.h"
+#include "Object/CubeComp.h"
+#include "Object/SphereComp.h"
 
 FEditorEngine::FEditorEngine()
 	: mRenderer(nullptr)
 	, mEditorViewportCamera()
 	, mEditorViewport(nullptr)
 	, mUiManager(nullptr)
-	, mVertexBuffer(nullptr)
+	, mSphereVertexBuffer(nullptr)
+	, mCubeVertexBuffer(nullptr)
 	, mEngineTimer(120) // target FPS
 	, mbIsInitialized(false)
 	, mbIsReleased(false)
@@ -53,7 +59,19 @@ void FEditorEngine::Init(HWND hWindow)
 	createManagers(hWindow);
 
 	// Create vertex buffer after renderer and shader
-	mVertexBuffer = mRenderer->CreateVertexBuffer(SPHERE_VERTICES, sizeof(SPHERE_VERTICES));
+	mSphereVertexBuffer = mRenderer->CreateVertexBuffer(SPHERE_VERTICES, sizeof(SPHERE_VERTICES));
+	mCubeVertexBuffer = mRenderer->CreateVertexBuffer(CUBE_VERTICES, sizeof(CUBE_VERTICES));
+
+	// Create scene components
+	{
+		UCubeComp* cubeComp = new UCubeComp();
+		cubeComp->SetRelativeLocation(FVector(0.0f, 2.0f, 0.0f));
+		mSceneComponents.Add(cubeComp);
+
+		USphereComp* sphereComp = new USphereComp();
+		sphereComp->SetRelativeLocation(FVector(2.0f, .0f, 0.0f));
+		mSceneComponents.Add(sphereComp);
+	}
 
 	mbIsInitialized = true;
 }
@@ -105,9 +123,18 @@ bool FEditorEngine::Update()
 
 			mRenderer->Prepare();
 			mRenderer->PrepareShader();
-			mRenderer->UpdateConstant(worldMatrix, viewProjectionMatrix);
 
-			mRenderer->RenderPrimitive(*mVertexBuffer, sizeof(SPHERE_VERTICES) / sizeof(FVertexSimple));
+			// Gather render data from scene components
+			TArray<FPrimitiveRenderData> renderDatas;
+			for (const USceneComponent* sceneComponent : mSceneComponents)
+			{
+				if (const UPrimitiveComponent* primitiveComp = dynamic_cast<const UPrimitiveComponent*>(sceneComponent))
+				{
+					FPrimitiveRenderData renderData = primitiveComp->GetRenderData();
+					renderDatas.Add(std::move(renderData));
+				}
+			}
+			renderPrimitives(renderDatas, viewProjectionMatrix);
 		}
 
 		mUiManager->Render();
@@ -130,11 +157,22 @@ void FEditorEngine::End()
 	}
 
 	// Release resources
-	if (mVertexBuffer)
+	if (mSphereVertexBuffer)
 	{
-		mRenderer->ReleaseVertexBuffer(*mVertexBuffer);
-		mVertexBuffer = nullptr;
+		mRenderer->ReleaseVertexBuffer(*mSphereVertexBuffer);
+		mSphereVertexBuffer = nullptr;
 	}
+	if (mCubeVertexBuffer)
+	{
+		mRenderer->ReleaseVertexBuffer(*mCubeVertexBuffer);
+		mCubeVertexBuffer = nullptr;
+	}
+
+	for (USceneComponent* sceneComponent : mSceneComponents)
+	{
+		delete sceneComponent;
+	}
+	mSceneComponents.Reset(0);
 
 	releaseManagers();
 
@@ -193,5 +231,32 @@ void FEditorEngine::releaseManagers()
 		mRenderer->Release();
 		delete mRenderer;
 		mRenderer = nullptr;
+	}
+}
+
+void FEditorEngine::renderPrimitives(
+	const TArray<FPrimitiveRenderData>& renderDatas,
+	const FMatrix& viewProjectionMatrix)
+{
+	for (const FPrimitiveRenderData& renderData : renderDatas)
+	{
+		mRenderer->UpdateConstant(renderData.WorldMatrix, viewProjectionMatrix);
+		renderPrimitive(renderData.PrimitiveType);
+	}
+}
+
+void FEditorEngine::renderPrimitive(EPrimitiveType primitiveType)
+{
+	switch (primitiveType)
+	{
+	case EPrimitiveType::Sphere:
+		mRenderer->RenderPrimitive(*mSphereVertexBuffer, sizeof(SPHERE_VERTICES) / sizeof(FVertexSimple));
+		break;
+	case EPrimitiveType::Cube:
+		mRenderer->RenderPrimitive(*mCubeVertexBuffer, sizeof(CUBE_VERTICES) / sizeof(FVertexSimple));
+		break;
+	default:
+		assert(false && "Unsupported primitive type");
+		break;
 	}
 }

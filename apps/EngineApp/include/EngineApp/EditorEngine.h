@@ -5,6 +5,10 @@
 
 #include "EngineTimer.h"
 #include "Core/Math/Camera.h"
+#include "Core/Containers/TArray.h"
+
+#include "RenderInterface/PrimitiveRenderData.h"
+#include "Object/SceneComponent.h"
 
 class URenderer;
 class FEditorUiManager;
@@ -22,6 +26,13 @@ public:
 private:
 	void createManagers(HWND hWindow);
 	void releaseManagers();
+
+	// TODO: Move this to a separate class, e.g., SceneManager or GraphicsManager
+	void renderPrimitives(
+		const TArray<FPrimitiveRenderData>& renderDatas,
+		const FMatrix& viewProjectionMatirx // TODO: Set view projection matrix only once per frame
+	);
+	void renderPrimitive(EPrimitiveType primitiveType);
 private:
 	/* Managers */
 	// TODO: Wrap renderer by GraphicsManager
@@ -32,7 +43,12 @@ private:
 	FEditorUiManager* mUiManager;
 
 	// TODO: Move this to a separate class, e.g., GpuResourceManager
-	ID3D11Buffer* mVertexBuffer;
+	ID3D11Buffer* mSphereVertexBuffer;
+	ID3D11Buffer* mCubeVertexBuffer;
+
+	// Scene objects
+	// TODO: Move this to a separate class, e.g., SceneManager
+	TArray<USceneComponent*> mSceneComponents;
 
 	/* Timer */
 	FEngineTimer mEngineTimer;
