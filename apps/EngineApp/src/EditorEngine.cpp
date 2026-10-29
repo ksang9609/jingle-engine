@@ -69,7 +69,7 @@ void FEditorEngine::Init(HWND hWindow)
 		mSceneComponents.Add(cubeComp);
 
 		USphereComp* sphereComp = new USphereComp();
-		sphereComp->SetRelativeLocation(FVector(2.0f, .0f, 0.0f));
+		sphereComp->SetRelativeLocation(FVector(2.0f, 0.0f, 0.0f));
 		mSceneComponents.Add(sphereComp);
 	}
 
@@ -116,8 +116,15 @@ bool FEditorEngine::Update()
 
 		// Draw the scene to the viewport render target
 		{
+			mRenderer->GetDeviceContext()->ClearDepthStencilView(
+				mEditorViewport->GetDepthStencilDSV(),
+				D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
+				1.0f, 0
+			);
+
 			mRenderer->BindViewportRTV(
 				*mEditorViewport->GetViewportRTV(),
+				*mEditorViewport->GetDepthStencilDSV(),
 				viewportWidth,
 				viewportHeight);
 

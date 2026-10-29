@@ -119,11 +119,13 @@ void URenderer::PrepareShader()
 
 void URenderer::BindViewportRTV(
 	ID3D11RenderTargetView& viewportRTV,
+	ID3D11DepthStencilView& viewportDSV,
 	float32 width,
 	float32 height
 	)
 {
 	auto* viewportRTVRef = &viewportRTV;
+	auto* viewportDSVRef = &viewportDSV;
 
 	D3D11_VIEWPORT gpuViewport = {
 		.TopLeftX = 0.0f,
@@ -134,7 +136,7 @@ void URenderer::BindViewportRTV(
 		.MaxDepth = 1.0f,
 	};
 
-	mDeviceContext->OMSetRenderTargets(1, &viewportRTVRef, nullptr);
+	mDeviceContext->OMSetRenderTargets(1, &viewportRTVRef, viewportDSVRef);
 	mDeviceContext->RSSetViewports(1, &gpuViewport);
 	mCurrentViewportBufferRTVRef = viewportRTVRef;
 }

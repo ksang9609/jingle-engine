@@ -14,15 +14,15 @@ public:
 	FEditorViewport(ID3D11Device& deviceRef);
 	~FEditorViewport();
 
-	ID3D11RenderTargetView* GetViewportRTV() const { return mViewportRTV; }
-	ID3D11ShaderResourceView* GetViewportSRV() const { return mViewportSRV; }
+	bool EnsureViewportSize(float width, float height);
 
 	/* Getters/Setters */
-
 	uint32 GetRenderWidth() const { return mRenderWidth; }
 	uint32 GetRenderHeight() const { return mRenderHeight; }
+	ID3D11RenderTargetView* GetViewportRTV() const { return mViewportRTV; }
+	ID3D11ShaderResourceView* GetViewportSRV() const { return mViewportSRV; }
+	ID3D11DepthStencilView* GetDepthStencilDSV() const { return mDepthStencilDSV; }
 
-	bool EnsureViewportSize(float width, float height);
 private:
 	TResult<void, FString> createViewportResources(uint32 width, uint32 height);
 
@@ -36,6 +36,9 @@ private:
 	ID3D11Texture2D* mViewportTexture;
 	ID3D11RenderTargetView* mViewportRTV;
 	ID3D11ShaderResourceView* mViewportSRV;
+
+	ID3D11Texture2D* mDepthStencilTexture;
+	ID3D11DepthStencilView* mDepthStencilDSV;
 
 	uint32 mRenderWidth;	// Width of the render target
 	uint32 mRenderHeight;	// Height of the render target

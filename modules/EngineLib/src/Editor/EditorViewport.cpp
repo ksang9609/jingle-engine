@@ -8,6 +8,8 @@ FEditorViewport::FEditorViewport(ID3D11Device& deviceRef)
 	, mViewportTexture(nullptr)
 	, mViewportRTV(nullptr)
 	, mViewportSRV(nullptr)
+	, mDepthStencilTexture(nullptr)
+	, mDepthStencilDSV(nullptr)
 	, mRenderWidth(0)
 	, mRenderHeight(0)
 {
@@ -51,6 +53,7 @@ bool FEditorViewport::EnsureViewportSize(float width, float height)
 
 TResult<void, FString> FEditorViewport::createViewportResources(uint32 width, UINT32 height)
 {
+	// Create viewport texture
 	D3D11_TEXTURE2D_DESC viewportBufferDesc = {
 		.Width = static_cast<UINT>(width),
 		.Height = static_cast<UINT>(height),
@@ -83,6 +86,9 @@ TResult<void, FString> FEditorViewport::createViewportResources(uint32 width, UI
 	hr = mDeviceRef->CreateRenderTargetView(mViewportTexture, &viewportBufferRTVdesc, &mViewportRTV);
 	if (FAILED(hr))
 	{
+		mViewportTexture->Release();
+		mViewportTexture = nullptr;
+
 		return TErr<FString>(FString("Failed to create viewport render target view."
 			"error code: " + std::to_string(hr)
 		));
@@ -100,7 +106,48 @@ TResult<void, FString> FEditorViewport::createViewportResources(uint32 width, UI
 	hr = mDeviceRef->CreateShaderResourceView(mViewportTexture, &viewportBufferSRVdesc, &mViewportSRV);
 	if (FAILED(hr))
 	{
+		mViewportTexture->Release();
+		mViewportTexture = nullptr;
+		mViewportRTV->Release();
+		mViewportRTV = nullptr;
+
 		return TErr<FString>(FString("Failed to create viewport shader resource view."
+			"error code: " + std::to_string(hr)
+		));
+	}
+
+	// Create depth stencil texture
+	D3D11_TEXTURE2D_DESC depthStencilDesc = {
+		.Width = static_cast<UINT>(width),
+		.Height = static_cast<UINT>(height),
+		.MipLevels = 1,
+		.ArraySize = 1,
+		.Format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+		.SampleDesc = {
+			.Count = 1,
+			.Quality = 0,
+		},
+		.Usage = D3D11_USAGE_DEFAULT,
+		.BindFlags = D3D11_BIND_DEPTH_STENCIL,
+	};
+
+	hr = mDeviceRef->CreateTexture2D(
+		&depthStencilDesc, nullptr, &mDepthStencilTexture);
+	if (FAILED(hr))
+	{
+		return TErr<FString>(FString("Failed to create depth stencil texture."
+			"error code: " + std::to_string(hr)
+		));
+	}
+
+	hr = mDeviceRef->CreateDepthStencilView(
+		mDepthStencilTexture, nullptr, &mDepthStencilDSV);
+	if (FAILED(hr))
+	{
+		mDepthStencilTexture->Release();
+		mDepthStencilTexture = nullptr;
+
+		return TErr<FString>(FString("Failed to create depth stencil view."
 			"error code: " + std::to_string(hr)
 		));
 	}
@@ -124,5 +171,15 @@ void FEditorViewport::releaseViewportResources()
 	{
 		mViewportTexture->Release();
 		mViewportTexture = nullptr;
+	}
+	if (mDepthStencilDSV)
+	{
+		mDepthStencilDSV->Release();
+		mDepthStencilDSV = nullptr;
+	}
+	if (mDepthStencilTexture)
+	{
+		mDepthStencilTexture->Release();
+		mDepthStencilTexture = nullptr;
 	}
 }

@@ -34,7 +34,10 @@ public:
 	void SwapBuffer();
 	void Prepare();
 	void PrepareShader();
-	void BindViewportRTV(ID3D11RenderTargetView& viewportRTV, float32 width, float32 height);
+	void BindViewportRTV(
+		ID3D11RenderTargetView& viewportRTV, 
+		ID3D11DepthStencilView& viewportDSV,
+		float32 width, float32 height);
 	void RenderPrimitive(ID3D11Buffer& vertexBuffer, UINT numVertices);
 	void UpdateConstant(const FMatrix& worldMatrix, const FMatrix& viewMatrix);
 
@@ -48,6 +51,7 @@ private:
 	void createDeviceAndSwapChain(HWND hWindow);
 	void releaseDeviceAndSwapChain();
 	void createFrameBuffer();
+	void createDepthStencil();
 	void releaseFrameBuffer();
 	void createRaterizerState();
 	void releaseRasterizerState();
