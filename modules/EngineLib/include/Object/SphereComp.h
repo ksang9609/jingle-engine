@@ -3,10 +3,10 @@
 
 #include "Object/PrimitiveComponent.h"
 
-class SphereComp final : public PrimitiveComponent
+class USphereComp final : public UPrimitiveComponent
 {
 public:
-	SphereComp();
+	USphereComp();
 	
 private:
 };

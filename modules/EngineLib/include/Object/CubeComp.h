@@ -3,10 +3,10 @@
 
 #include "Object/PrimitiveComponent.h"
 
-class CubeComp final : public PrimitiveComponent
+class UCubeComp final : public UPrimitiveComponent
 {
 public:
-	CubeComp();
+	UCubeComp();
 
 private:
 };

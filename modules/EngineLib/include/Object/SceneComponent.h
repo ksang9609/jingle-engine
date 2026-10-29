@@ -5,11 +5,11 @@
 
 #include "Core/Math/MathTypes.h"
 
-class SceneComponent : public UObject
+class USceneComponent : public UObject
 {
 public:
-	SceneComponent();
-	virtual ~SceneComponent() = default;
+	USceneComponent();
+	virtual ~USceneComponent() = default;
 
 	/* Methods */
 	FMatrix GetWorldMatrix() const;

@@ -1,8 +1,8 @@
 // Object/CubeComp.cpp
 #include "Object/CubeComp.h"
 
-CubeComp::CubeComp()
-	: PrimitiveComponent()
+UCubeComp::UCubeComp()
+	: UPrimitiveComponent()
 {
 	SetPrimitiveType(EPrimitiveType::Cube);
 }

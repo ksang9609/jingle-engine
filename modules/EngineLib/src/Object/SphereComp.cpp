@@ -1,8 +1,8 @@
 // Object/SphereComp.cpp
 #include "Object/SphereComp.h"
 
-SphereComp::SphereComp()
-	: PrimitiveComponent()
+USphereComp::USphereComp()
+	: UPrimitiveComponent()
 {
 	SetPrimitiveType(EPrimitiveType::Sphere);
 }

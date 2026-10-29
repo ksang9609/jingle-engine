@@ -5,11 +5,11 @@
 
 #include "RenderInterface/PrimitiveRenderData.h"
 
-class PrimitiveComponent : public SceneComponent
+class UPrimitiveComponent : public USceneComponent
 {
 public:
-	PrimitiveComponent();
-	virtual ~PrimitiveComponent() = default;
+	UPrimitiveComponent();
+	virtual ~UPrimitiveComponent() = default;
 
 	/* Methods */
 	FPrimitiveRenderData GetRenderData() const;

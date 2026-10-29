@@ -1,14 +1,14 @@
 // Object/PrimitiveComponent.cpp
 #include "Object/PrimitiveComponent.h"
 
-PrimitiveComponent::PrimitiveComponent()
-	: SceneComponent()
+UPrimitiveComponent::UPrimitiveComponent()
+	: USceneComponent()
 	, mPrimitiveType(EPrimitiveType::None)
 {
 }
 
 /* ===== Methods ===== */
-FPrimitiveRenderData PrimitiveComponent::GetRenderData() const
+FPrimitiveRenderData UPrimitiveComponent::GetRenderData() const
 {
 	FPrimitiveRenderData RenderData{
 		.WorldMatrix = GetWorldMatrix(),
@@ -19,12 +19,12 @@ FPrimitiveRenderData PrimitiveComponent::GetRenderData() const
 }
 
 /* ===== Getters / Setters ===== */
-EPrimitiveType PrimitiveComponent::GetPrimitiveType() const
+EPrimitiveType UPrimitiveComponent::GetPrimitiveType() const
 {
 	return mPrimitiveType;
 }
 
-void PrimitiveComponent::SetPrimitiveType(EPrimitiveType InPrimitiveType)
+void UPrimitiveComponent::SetPrimitiveType(EPrimitiveType InPrimitiveType)
 {
 	mPrimitiveType = InPrimitiveType;
 }
