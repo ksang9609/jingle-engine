@@ -6,6 +6,7 @@ classDiagram
 namespace EngineApp {
 	class EditorEngine
 	class FEngineTimer
+	class FSceneManager
 }
 
 namespace Rendering {
@@ -32,9 +33,12 @@ namespace RenderInterface {
 EditorEngine *-- FEngineTimer
 EditorEngine *-- URenderer
 EditorEngine *-- FEditorUiManager
+EditorEngine *-- FSceneManager
 EditorEngine *-- FEditorViewport
 EditorEngine *-- FCamera
-EditorEngine *-- USceneComponent
+
+EditorEngine ..> USceneComponent : Creates
+FSceneManager *-- USceneComponent
 
 USceneComponent ..> FPrimitiveRenderData
 URenderer ..> FPrimitiveRenderData
