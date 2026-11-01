@@ -21,13 +21,16 @@ public:
 	FVector operator/(const float& f) const;
 
 	void Normalize();
-	[[nodiscard]] FVector Normalized() const;
+	[[nodiscard]] FVector GetNormalized() const;
 
 	float Dot(const FVector& v) const;
 	static float Dot(const FVector& vA, const FVector& vB);
 
 	static FVector Zero;
 	static FVector One;
+	static FVector Forward;
+	static FVector Right;
+	static FVector Up;
 
 private:
 
@@ -36,6 +39,20 @@ private:
 using FVector3 = FVector;
 
 static FVector operator*(const float& f, const FVector& v);
+
+class FVector2
+{
+public:
+	float X;
+	float Y;
+
+	FVector2();
+	FVector2(float x, float y);
+	FVector2(float n);
+
+	static FVector2 Zero;
+	static FVector2 One;
+};
 
 class FVector4
 {

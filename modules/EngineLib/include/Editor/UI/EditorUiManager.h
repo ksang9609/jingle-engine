@@ -6,20 +6,40 @@
 
 #include "Core/Core.h"
 #include "Editor/UI/ConsoleWindow.h"
+#include "Editor/UI/ControlPanel.h"
+#include "Editor/UI/EditorViewportPanel.h"
+
+struct FEditorUiManagerParams
+{
+	HWND HWnd;
+	ID3D11Device& DeviceRef;
+	ID3D11DeviceContext& ContextRef;
+	FCamera& CameraRef;
+	FEditorViewport& EditorViewportRef;
+};
 
 class FEditorUiManager final
 {
 public:
 	// TODO: Wrap device and device context in a class and pass it to the constructor
-	FEditorUiManager(HWND hWnd, ID3D11Device* device, ID3D11DeviceContext* context);
+	FEditorUiManager(const FEditorUiManagerParams& params);
 	~FEditorUiManager();
 
-	void Render(ID3D11ShaderResourceView* frameTextureSRV);
+	/* General Methods */
+	void BeginFrame();
+	void Render();
 
 	void Release();
+
+	/* Pacade */
+	inline FVector2 GetViewportDisplaySize() const { return mViewportPanel.GetDisplaySize(); }
+	float GetViewportAspectRatio() const;
+
 private:
 	/* Windows */
 	FConsoleWindow mConsoleWindow;
+	FControlPanel mControlPanel;
+	FEditorViewportPanel mViewportPanel;
 
 	/* Internal States */
 	bool mbIsInitialized;

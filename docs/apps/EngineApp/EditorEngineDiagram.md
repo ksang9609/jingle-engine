@@ -6,18 +6,41 @@ classDiagram
 namespace EngineApp {
 	class EditorEngine
 	class FEngineTimer
+	class FSceneManager
 }
 
 namespace Rendering {
 	class URenderer
 }
 
-namespace EditorUI {
+namespace Editor {
 	class FEditorUiManager
+	class FEditorViewport
+}
+
+namespace Core.Math {
+	class FCamera
+}
+
+namespace Object {
+	class USceneComponent
+}
+
+namespace RenderInterface {
+	class FPrimitiveRenderData
 }
 
 EditorEngine *-- FEngineTimer
 EditorEngine *-- URenderer
 EditorEngine *-- FEditorUiManager
+EditorEngine *-- FSceneManager
+EditorEngine *-- FEditorViewport
+EditorEngine *-- FCamera
+
+EditorEngine ..> USceneComponent : Creates
+FSceneManager *-- USceneComponent
+
+USceneComponent ..> FPrimitiveRenderData
+URenderer ..> FPrimitiveRenderData
 
 ```

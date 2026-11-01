@@ -3,10 +3,18 @@
 
 #include <d3d11.h>
 
+#include "Core/Math/Camera.h"
+#include "Core/Containers/TArray.h"
+
+#include "RenderInterface/PrimitiveRenderData.h"
+#include "Object/SceneComponent.h"
+
 #include "EngineTimer.h"
+#include "SceneManager.h"
 
 class URenderer;
 class FEditorUiManager;
+class FEditorViewport;
 
 class FEditorEngine final
 {
@@ -18,13 +26,28 @@ public:
 	bool Update();
 	void End();
 private:
+	void createManagers(HWND hWindow);
+	void releaseManagers();
+
+	// TODO: Move this to a separate class, e.g., SceneManager or GraphicsManager
+	void renderPrimitives(
+		const TArray<FPrimitiveRenderData>& renderDatas,
+		const FMatrix& viewProjectionMatirx // TODO: Set view projection matrix only once per frame
+	);
+	void renderPrimitive(EPrimitiveType primitiveType);
+private:
 	/* Managers */
 	// TODO: Wrap renderer by GraphicsManager
 	URenderer* mRenderer;
+	FCamera mEditorViewportCamera;
+	FEditorViewport* mEditorViewport;
+
 	FEditorUiManager* mUiManager;
+	FSceneManager* mSceneManager;
 
 	// TODO: Move this to a separate class, e.g., GpuResourceManager
-	ID3D11Buffer* mVertexBuffer;
+	ID3D11Buffer* mSphereVertexBuffer;
+	ID3D11Buffer* mCubeVertexBuffer;
 
 	/* Timer */
 	FEngineTimer mEngineTimer;
@@ -32,8 +55,4 @@ private:
 	/* Internal States */
 	bool mbIsInitialized;
 	bool mbIsReleased;
-
-	/* Member Functions */
-	void createManagers(HWND hWindow);
-	void releaseManagers();
 };

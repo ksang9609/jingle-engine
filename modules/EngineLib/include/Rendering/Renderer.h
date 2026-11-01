@@ -1,16 +1,12 @@
 // EngineLib/Rendering/Renderer.h
 #pragma once
 
-// D3D libraries
-#pragma comment(lib, "user32")
-#pragma comment(lib, "d3d11")
-#pragma comment(lib, "d3dcompiler")
-
 // D3D headers
 #include <d3d11.h>
 #include <d3dcompiler.h>
 
 #include "Core/Math/Vector.h"
+#include "Core/Math/Matrix.h"
 
 #include "VertexLayout.h"
 
@@ -18,12 +14,10 @@ class URenderer final
 {
 public:
 	// Constant buffer
-	struct FConstants
+	struct alignas(16) FConstants
 	{
-		FVector Location;
-		float Pad0;
-		FVector Scale;
-		float Pad1;
+		FMatrix WorldMatrix;
+		FMatrix ViewMatrix;
 	};
 
 	URenderer(HWND hWindow);
@@ -35,13 +29,31 @@ public:
 	void SwapBuffer();
 	void Prepare();
 	void PrepareShader();
+	void BindViewportRTV(
+		ID3D11RenderTargetView& viewportRTV, 
+		ID3D11DepthStencilView& viewportDSV,
+		float32 width, float32 height);
 	void RenderPrimitive(ID3D11Buffer& vertexBuffer, UINT numVertices);
-	void UpdateConstant(const FVector& location, const FVector& scale);
+	void UpdateConstant(const FMatrix& worldMatrix, const FMatrix& viewMatrix);
 
 	/* Getter */
 	ID3D11Device* GetDevice() const { return mDevice; }
 	ID3D11DeviceContext* GetDeviceContext() const { return mDeviceContext; }
-	ID3D11ShaderResourceView* GetViewportBufferSRV() const { return mViewportBufferSRV; }
+
+	// Temp
+	ImVec2 GetViewportSize() const { return mViewportSize; }
+private:
+	void createDeviceAndSwapChain(HWND hWindow);
+	void releaseDeviceAndSwapChain();
+	void createFrameBuffer();
+	void createDepthStencil();
+	void releaseFrameBuffer();
+	void createRaterizerState();
+	void releaseRasterizerState();
+	void createShader();
+	void releaseShader();
+	void createConstantBuffer();
+	void releaseConstantBuffer();
 
 private:
 	// Pointers to manage Direct3D 11 device, device context, and swap chain
@@ -54,9 +66,7 @@ private:
 	ID3D11RenderTargetView* mFrameBufferRTV = nullptr;
 	ID3D11RasterizerState* mRasterizerState = nullptr;
 	ID3D11Buffer* mConstantBuffer = nullptr;
-	ID3D11Texture2D* mViewportBuffer = nullptr;
-	ID3D11RenderTargetView* mViewportBufferRTV = nullptr;
-	ID3D11ShaderResourceView* mViewportBufferSRV = nullptr;
+	ID3D11RenderTargetView* mCurrentViewportBufferRTVRef = nullptr;
 
 	FLOAT mClearColor[4] = { 0.025f, 0.025f, 0.025f, 1.0f };
 	D3D11_VIEWPORT mViewportInfo;
@@ -70,17 +80,6 @@ private:
 	/* Internal State */
 	bool mIsReleased;
 
-	/* Member Functions */
-	void createDeviceAndSwapChain(HWND hWindow);
-	void releaseDeviceAndSwapChain();
-	void createFrameBuffer();
-	void releaseFrameBuffer();
-	void createViewportBuffer();
-	void releaseViewportBuffer();
-	void createRaterizerState();
-	void releaseRasterizerState();
-	void createShader();
-	void releaseShader();
-	void createConstantBuffer();
-	void releaseConstantBuffer();
+	// Temp
+	ImVec2 mViewportSize;
 };

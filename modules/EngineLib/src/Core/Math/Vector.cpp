@@ -6,6 +6,9 @@
 
 FVector FVector::Zero = FVector(0, 0, 0);
 FVector FVector::One = FVector(1, 1, 1);
+FVector FVector::Forward = FVector(1, 0, 0);
+FVector FVector::Right = FVector(0, 1, 0);
+FVector FVector::Up = FVector(0, 0, 1);
 
 FVector::FVector(float x, float y, float z)
 	: X(x)
@@ -66,7 +69,7 @@ void FVector::Normalize()
 	Z /= len;
 }
 
-FVector FVector::Normalized() const
+FVector FVector::GetNormalized() const
 {
 	float len = Length();
 	return FVector{ X / len, Y / len, Z / len };
@@ -85,6 +88,29 @@ float FVector::Dot(const FVector& vA, const FVector& vB)
 FVector operator*(const float& f, const FVector& v)
 {
 	return FVector{ v.X * f, v.Y * f, v.Z * f };
+}
+
+/* ===== FVector2 ===== */
+
+FVector2 FVector2::Zero = FVector2(0, 0);
+FVector2 FVector2::One = FVector2(1, 1);
+
+FVector2::FVector2()
+	: X(0)
+	, Y(0)
+{
+}
+
+FVector2::FVector2(float x, float y)
+	: X(x)
+	, Y(y)
+{
+}
+
+FVector2::FVector2(float n)
+	: X(n)
+	, Y(n)
+{
 }
 
 

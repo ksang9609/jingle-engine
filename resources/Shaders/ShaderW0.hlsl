@@ -1,14 +1,14 @@
+#pragma pack_matrix(row_major)
+
 cbuffer constants : register(b0)
 {
-    float3 Location;
-    float Pad0;
-    float3 Scale;
-    float Pad1;
+    matrix M;    
+    matrix VP;
 }
 
 struct VS_INPUT
 {
-    float4 position : POSITION; // Input position from vertex buffer
+    float3 position : POSITION; // Input position from vertex buffer
     float4 color : COLOR;       // Input color from vertex buffer
 };
 
@@ -22,7 +22,7 @@ PS_INPUT mainVS(VS_INPUT input)
 {
     PS_INPUT output;
     
-    output.position = float4(Scale, 1) * input.position + float4(Location, 0);
+    output.position = mul(mul(float4(input.position, 1.0f), M), VP);
     
     // Pass the color to the pixel shader
     output.color = input.color;

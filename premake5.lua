@@ -19,6 +19,8 @@ workspace "JungleEngine"
 
     multiprocessorcompile "On"
 
+    links { "user32", "d3d11", "d3dcompiler" }
+
     -- 실행 파일/라이브러리와 중간 파일을 분리
     targetdir "bin/%{cfg.platform}/%{cfg.buildcfg}"
     objdir "bin-int/%{prj.name}/%{cfg.platform}/%{cfg.buildcfg}"
