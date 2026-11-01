@@ -1,8 +1,6 @@
 // Editor/EditorViewport.h
 #pragma once
 
-#pragma comment(lib, "user32")
-#pragma comment(lib, "d3d11")
 #include <d3d11.h>
 
 #include "Core/Core.h"
