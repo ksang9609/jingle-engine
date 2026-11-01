@@ -3,12 +3,14 @@
 
 #include <d3d11.h>
 
-#include "EngineTimer.h"
 #include "Core/Math/Camera.h"
 #include "Core/Containers/TArray.h"
 
 #include "RenderInterface/PrimitiveRenderData.h"
 #include "Object/SceneComponent.h"
+
+#include "EngineTimer.h"
+#include "SceneManager.h"
 
 class URenderer;
 class FEditorUiManager;
@@ -41,14 +43,11 @@ private:
 	FEditorViewport* mEditorViewport;
 
 	FEditorUiManager* mUiManager;
+	FSceneManager* mSceneManager;
 
 	// TODO: Move this to a separate class, e.g., GpuResourceManager
 	ID3D11Buffer* mSphereVertexBuffer;
 	ID3D11Buffer* mCubeVertexBuffer;
-
-	// Scene objects
-	// TODO: Move this to a separate class, e.g., SceneManager
-	TArray<USceneComponent*> mSceneComponents;
 
 	/* Timer */
 	FEngineTimer mEngineTimer;

@@ -35,6 +35,7 @@ FEditorEngine::FEditorEngine()
 	, mEditorViewportCamera()
 	, mEditorViewport(nullptr)
 	, mUiManager(nullptr)
+	, mSceneManager(nullptr)
 	, mSphereVertexBuffer(nullptr)
 	, mCubeVertexBuffer(nullptr)
 	, mEngineTimer(120) // target FPS
@@ -66,11 +67,11 @@ void FEditorEngine::Init(HWND hWindow)
 	{
 		UCubeComp* cubeComp = new UCubeComp();
 		cubeComp->SetRelativeLocation(FVector(0.0f, 2.0f, 0.0f));
-		mSceneComponents.Add(cubeComp);
+		mSceneManager->AddSceneComponent(*cubeComp);
 
 		USphereComp* sphereComp = new USphereComp();
 		sphereComp->SetRelativeLocation(FVector(2.0f, 0.0f, 0.0f));
-		mSceneComponents.Add(sphereComp);
+		mSceneManager->AddSceneComponent(*sphereComp);
 	}
 
 	mbIsInitialized = true;
@@ -132,15 +133,9 @@ bool FEditorEngine::Update()
 			mRenderer->PrepareShader();
 
 			// Gather render data from scene components
-			TArray<FPrimitiveRenderData> renderDatas;
-			for (const USceneComponent* sceneComponent : mSceneComponents)
-			{
-				if (const UPrimitiveComponent* primitiveComp = dynamic_cast<const UPrimitiveComponent*>(sceneComponent))
-				{
-					FPrimitiveRenderData renderData = primitiveComp->GetRenderData();
-					renderDatas.Add(std::move(renderData));
-				}
-			}
+			TArray<FPrimitiveRenderData> renderDatas =
+				mSceneManager->GetAllPrimitiveRenderDatas();
+
 			renderPrimitives(renderDatas, viewProjectionMatrix);
 		}
 
@@ -175,12 +170,6 @@ void FEditorEngine::End()
 		mCubeVertexBuffer = nullptr;
 	}
 
-	for (USceneComponent* sceneComponent : mSceneComponents)
-	{
-		delete sceneComponent;
-	}
-	mSceneComponents.Reset(0);
-
 	releaseManagers();
 
 	mbIsReleased = true;
@@ -188,6 +177,8 @@ void FEditorEngine::End()
 
 void FEditorEngine::createManagers(HWND hWindow)
 {
+	assert(!mbIsInitialized);
+
 	// Initialize camera
 	mEditorViewportCamera
 		.SetPosition(FVector(-5.0f, 0.0f, 0.0f))
@@ -218,10 +209,22 @@ void FEditorEngine::createManagers(HWND hWindow)
 			.EditorViewportRef = *mEditorViewport
 			});
 	}
+
+	// Create Scene Manager
+	if (mSceneManager == nullptr)
+	{
+		mSceneManager = new FSceneManager();
+	}
 }
 
 void FEditorEngine::releaseManagers()
 {
+	if (mSceneManager)
+	{
+		mSceneManager->Release();
+		delete mSceneManager;
+		mSceneManager = nullptr;
+	}
 	if (mUiManager)
 	{
 		mUiManager->Release();
