@@ -97,15 +97,10 @@ bool FEditorEngine::Update()
 	{
 		mUiManager->BeginFrame();
 
-		static FTransform transform(
-			FVector(0.0f, 2.0f, 0.0f), FQuat::Identity, FVector(1.0f, 1.0f, 1.0f)
-		);
-
 		const FVector2 viewportSize = mUiManager->GetViewportDisplaySize();
 		const float viewportWidth = viewportSize.X;
 		const float viewportHeight = viewportSize.Y;
 		const float aspectRatio = mUiManager->GetViewportAspectRatio();
-		const FMatrix worldMatrix = transform.GetWorldMatrix();
 		const FMatrix viewProjectionMatrix =
 			mEditorViewportCamera.GetViewMatrix()
 			* mEditorViewportCamera.GetProjectionMatrix(aspectRatio);
