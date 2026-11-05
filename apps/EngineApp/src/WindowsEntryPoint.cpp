@@ -112,6 +112,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		CW_USEDEFAULT, CW_USEDEFAULT, 1024, 1024,
 		nullptr, nullptr, hInstance, nullptr);
 
+	if (!hWnd)
+	{
+		return -1;
+	}
+
+	RAWINPUTDEVICE mouseDevice{};
+	mouseDevice.usUsagePage = 0x01; // Generic Desktop Controls
+	mouseDevice.usUsage = 0x02;     // Mouse
+	mouseDevice.dwFlags = 0;
+	mouseDevice.hwndTarget = hWnd;
+
+	if (!RegisterRawInputDevices(
+		&mouseDevice, 1, sizeof(RAWINPUTDEVICE)))
+	{
+		return -1;
+	}
+
 	FEditorEngine editorEngine(GInputSystem);
 
 	editorEngine.Init(hWnd);

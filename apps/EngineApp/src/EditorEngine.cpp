@@ -25,6 +25,76 @@
 #include "Object/CubeComp.h"
 #include "Object/SphereComp.h"
 
+namespace
+{
+	void processCameraInput(FInputSystem& inputSystem, FCamera& camera, float32 deltaTime)
+	{
+		constexpr float cameraMoveSpeed = 5.0f; // units per second
+
+		// Camera movement
+		FVector cameraMovement;
+
+		auto addCameraMovement =
+			[&cameraMovement, &cameraMoveSpeed, &deltaTime]
+			(const FVector& direction)
+			{
+				cameraMovement += direction * cameraMoveSpeed * deltaTime;
+			};
+
+		if (inputSystem.IsKeyDown(EKeyCode::W))
+		{
+			addCameraMovement(camera.GetRotation().GetForwardVector());
+		}
+		if (inputSystem.IsKeyDown(EKeyCode::S))
+		{
+			addCameraMovement(-camera.GetRotation().GetForwardVector());
+		}
+		if (inputSystem.IsKeyDown(EKeyCode::A))
+		{
+			addCameraMovement(-camera.GetRotation().GetRightVector());
+		}
+		if (inputSystem.IsKeyDown(EKeyCode::D))
+		{
+			addCameraMovement(camera.GetRotation().GetRightVector());
+		}
+		if (inputSystem.IsKeyDown(EKeyCode::Q))
+		{
+			addCameraMovement(-FVector::Up);
+		}
+		if (inputSystem.IsKeyDown(EKeyCode::E))
+		{
+			addCameraMovement(FVector::Up);
+		}
+		if (inputSystem.IsKeyDown(EKeyCode::R))
+		{
+			addCameraMovement(camera.GetRotation().GetUpVector());
+		}
+		if (inputSystem.IsKeyDown(EKeyCode::F))
+		{
+			addCameraMovement(-camera.GetRotation().GetUpVector());
+		}
+
+		if (!cameraMovement.IsZero())
+		{
+			camera.SetPosition(camera.GetPosition() + cameraMovement);
+		}
+
+		// Camera rotation
+		if (inputSystem.IsKeyDown(EKeyCode::RButton))
+		{
+			FVector2 mouseDelta = inputSystem.GetMouseDelta();
+			constexpr float rotationSpeed = 0.1f; // degrees per pixel
+			float32 yawDelta = mouseDelta.X * rotationSpeed;
+			float32 pitchDelta = mouseDelta.Y * rotationSpeed;
+
+			FQuat yawRotation = FQuat::MakeFromAxisAngle(FVector::Up, yawDelta);
+			FQuat pitchRotation = FQuat::MakeFromAxisAngle(camera.GetRotation().GetRightVector(), pitchDelta);
+			FQuat newRotation = camera.GetRotation() * pitchRotation * yawRotation;
+			camera.SetRotation(newRotation);
+		}
+	}
+}
+
 FEditorEngine::FEditorEngine(FInputSystem& inputSystem)
 	: mInputSystemRef(inputSystem)
 	, mRenderer(nullptr)
@@ -80,6 +150,7 @@ bool FEditorEngine::Update()
 	// Timer
 	mEngineTimer.StartFrame();
 	float64 deltaTimeMS = mEngineTimer.GetDeltaTimeMS();
+	float32 deltaTimeSec = static_cast<float32>(deltaTimeMS / 1000.0);
 
 	/* Input */
 	{
@@ -97,6 +168,8 @@ bool FEditorEngine::Update()
 			consoleLog::Log(ELogLevel::Info, "Mouse Position: ({}, {}), Mouse Delta: ({}, {})",
 				mousePos.X, mousePos.Y, mouseDelta.X, mouseDelta.Y);
 		}
+
+		processCameraInput(mInputSystemRef, mEditorViewportCamera, deltaTimeSec);
 	}
 
 	/* Rendering */
