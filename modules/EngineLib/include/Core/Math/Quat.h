@@ -37,6 +37,7 @@ public:
 	static FQuat MakeLookDirectionQuat(const FVector& forward, const FVector& up);
 	static FQuat MakeLookAtQuat(const FVector& eyePosition, const FVector& target);	// use world up (0, 0, 1)
 	static FQuat MakeLookAtQuat(const FVector& eyePosition, const FVector& target, const FVector& up);
+	static FQuat MakeFromAxisAngle(const FVector& axis, float angleDeg);
 
 	FVector GetAxisVector(EAxis axis) const;
 	FVector GetForwardVector() const;
