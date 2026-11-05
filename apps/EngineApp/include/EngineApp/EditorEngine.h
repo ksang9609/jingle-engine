@@ -8,6 +8,7 @@
 
 #include "RenderInterface/PrimitiveRenderData.h"
 #include "Object/SceneComponent.h"
+#include "Input/InputSystem.h"
 
 #include "EngineTimer.h"
 #include "SceneManager.h"
@@ -19,7 +20,7 @@ class FEditorViewport;
 class FEditorEngine final
 {
 public:
-	FEditorEngine();
+	FEditorEngine(FInputSystem& inputSystem);
 	~FEditorEngine();
 
 	void Init(HWND hWindow);
@@ -36,6 +37,9 @@ private:
 	);
 	void renderPrimitive(EPrimitiveType primitiveType);
 private:
+	/* References */
+	FInputSystem& mInputSystemRef;
+
 	/* Managers */
 	// TODO: Wrap renderer by GraphicsManager
 	URenderer* mRenderer;

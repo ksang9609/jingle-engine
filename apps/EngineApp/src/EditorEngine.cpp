@@ -25,8 +25,9 @@
 #include "Object/CubeComp.h"
 #include "Object/SphereComp.h"
 
-FEditorEngine::FEditorEngine()
-	: mRenderer(nullptr)
+FEditorEngine::FEditorEngine(FInputSystem& inputSystem)
+	: mInputSystemRef(inputSystem)
+	, mRenderer(nullptr)
 	, mEditorViewportCamera()
 	, mEditorViewport(nullptr)
 	, mUiManager(nullptr)
@@ -80,16 +81,21 @@ bool FEditorEngine::Update()
 	mEngineTimer.StartFrame();
 	float64 deltaTimeMS = mEngineTimer.GetDeltaTimeMS();
 
-	/* Message handling */
-	MSG msg;
-
-	while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+	/* Input */
 	{
-		TranslateMessage(&msg);
-		DispatchMessageW(&msg);
-		if (msg.message == WM_QUIT)
+		mInputSystemRef.ProcessDeferredEvents();
+
+		// debug:
+		if (mInputSystemRef.IsKeyPressed(EKeyCode::Escape))
 		{
-			return false;
+			return false; // Exit the application
+		}
+		if (mInputSystemRef.IsKeyPressed(EKeyCode::LButton))
+		{
+			FVector2 mousePos = mInputSystemRef.GetMousePosition();
+			FVector2 mouseDelta = mInputSystemRef.GetMouseDelta();
+			consoleLog::Log(ELogLevel::Info, "Mouse Position: ({}, {}), Mouse Delta: ({}, {})",
+				mousePos.X, mousePos.Y, mouseDelta.X, mouseDelta.Y);
 		}
 	}
 
