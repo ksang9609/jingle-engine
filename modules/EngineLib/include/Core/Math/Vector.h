@@ -12,19 +12,31 @@ public:
 	FVector();
 	FVector(float n);
 
+	/* Methods */
+
 	float LengthSquared() const;
 	float Length() const;
-
-	FVector operator+(const FVector& v) const;
-	FVector operator-(const FVector& v) const;
-	FVector operator*(const float& f) const;
-	FVector operator/(const float& f) const;
 
 	void Normalize();
 	[[nodiscard]] FVector GetNormalized() const;
 
 	float Dot(const FVector& v) const;
 	static float Dot(const FVector& vA, const FVector& vB);
+
+	bool IsZero() const;
+
+	/* Operators */
+	FVector operator+(const FVector& v) const;
+	FVector operator-(const FVector& v) const;
+	FVector operator*(const float& f) const;
+	FVector operator/(const float& f) const;
+	FVector operator-() const;
+	bool operator==(const FVector& v) const;
+
+	FVector& operator+=(const FVector& v);
+	FVector& operator-=(const FVector& v);
+	FVector& operator*=(const float& f);
+	FVector& operator/=(const float& f);
 
 	static FVector Zero;
 	static FVector One;
