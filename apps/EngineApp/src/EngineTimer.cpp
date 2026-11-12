@@ -11,7 +11,7 @@ FEngineTimer::FEngineTimer(int targetFPS)
 	, mDeltaTimeMS(0.0)
 {
 	QueryPerformanceFrequency(&mFrequency);
-	mTargetFrameTimeMS = (mTargetFPS > 0) ? 1.0 / (mTargetFPS * 1000.0f) : 0.0;
+	SetTargetFPS(targetFPS);
 }
 
 void FEngineTimer::StartFrame()
@@ -47,5 +47,7 @@ void FEngineTimer::WaitForNextFrame()
 void FEngineTimer::SetTargetFPS(uint32 targetFPS)
 {
 	mTargetFPS = targetFPS;
-	mTargetFrameTimeMS = (mTargetFPS > 0) ? 1.0 / (mTargetFPS * 1000.0f) : 0.0;
+	mTargetFrameTimeMS = (mTargetFPS > 0) 
+		? (1.0 / mTargetFPS) * 1000.0f 
+		: 0.0;
 }

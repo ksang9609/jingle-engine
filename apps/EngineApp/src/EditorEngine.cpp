@@ -25,8 +25,79 @@
 #include "Object/CubeComp.h"
 #include "Object/SphereComp.h"
 
-FEditorEngine::FEditorEngine()
-	: mRenderer(nullptr)
+namespace
+{
+	void processCameraInput(FInputSystem& inputSystem, FCamera& camera, float32 deltaTime)
+	{
+		constexpr float cameraMoveSpeed = 5.0f; // units per second
+
+		// Camera movement
+		FVector cameraMovement;
+
+		auto addCameraMovement =
+			[&cameraMovement, &cameraMoveSpeed, &deltaTime]
+			(const FVector& direction)
+			{
+				cameraMovement += direction * cameraMoveSpeed * deltaTime;
+			};
+
+		if (inputSystem.IsKeyDown(EKeyCode::W))
+		{
+			addCameraMovement(camera.GetRotation().GetForwardVector());
+		}
+		if (inputSystem.IsKeyDown(EKeyCode::S))
+		{
+			addCameraMovement(-camera.GetRotation().GetForwardVector());
+		}
+		if (inputSystem.IsKeyDown(EKeyCode::A))
+		{
+			addCameraMovement(-camera.GetRotation().GetRightVector());
+		}
+		if (inputSystem.IsKeyDown(EKeyCode::D))
+		{
+			addCameraMovement(camera.GetRotation().GetRightVector());
+		}
+		if (inputSystem.IsKeyDown(EKeyCode::Q))
+		{
+			addCameraMovement(-FVector::Up);
+		}
+		if (inputSystem.IsKeyDown(EKeyCode::E))
+		{
+			addCameraMovement(FVector::Up);
+		}
+		if (inputSystem.IsKeyDown(EKeyCode::R))
+		{
+			addCameraMovement(camera.GetRotation().GetUpVector());
+		}
+		if (inputSystem.IsKeyDown(EKeyCode::F))
+		{
+			addCameraMovement(-camera.GetRotation().GetUpVector());
+		}
+
+		if (!cameraMovement.IsZero())
+		{
+			camera.SetPosition(camera.GetPosition() + cameraMovement);
+		}
+
+		// Camera rotation
+		if (inputSystem.IsKeyDown(EKeyCode::RButton))
+		{
+			FVector2 mouseDelta = inputSystem.GetMouseDelta();
+			constexpr float rotationSpeed = 0.1f; // degrees per pixel
+			float32 yawDelta = mouseDelta.X * rotationSpeed;
+			float32 pitchDelta = mouseDelta.Y * rotationSpeed;
+
+			FQuat yawRotation = FQuat::MakeFromAxisAngle(FVector::Up, yawDelta);
+			FQuat pitchRotation = FQuat::MakeFromAxisAngle(camera.GetRotation().GetRightVector(), pitchDelta);
+			FQuat newRotation = camera.GetRotation() * pitchRotation * yawRotation;
+			camera.SetRotation(newRotation);
+		}
+	}
+}
+
+FEditorEngine::FEditorEngine(FInputSystem& inputSystem)
+	: mInputSystemRef(inputSystem)
+	, mRenderer(nullptr)
 	, mEditorViewportCamera()
 	, mEditorViewport(nullptr)
 	, mUiManager(nullptr)
@@ -36,6 +107,8 @@ FEditorEngine::FEditorEngine()
 	, mEngineTimer(120) // target FPS
 	, mbIsInitialized(false)
 	, mbIsReleased(false)
+	, mPendingResize{ 0, 0 }
+	, bResizeRequested(false)
 {
 
 }
@@ -79,22 +152,32 @@ bool FEditorEngine::Update()
 	// Timer
 	mEngineTimer.StartFrame();
 	float64 deltaTimeMS = mEngineTimer.GetDeltaTimeMS();
+	float32 deltaTimeSec = static_cast<float32>(deltaTimeMS / 1000.0);
 
-	/* Message handling */
-	MSG msg;
-
-	while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+	/* Input */
 	{
-		TranslateMessage(&msg);
-		DispatchMessageW(&msg);
-		if (msg.message == WM_QUIT)
+		mInputSystemRef.ProcessDeferredEvents();
+
+		// debug:
+		if (mInputSystemRef.IsKeyPressed(EKeyCode::Escape))
 		{
-			return false;
+			return false; // Exit the application
 		}
+		if (mInputSystemRef.IsKeyPressed(EKeyCode::LButton))
+		{
+			FVector2 mousePos = mInputSystemRef.GetMousePosition();
+			FVector2 mouseDelta = mInputSystemRef.GetMouseDelta();
+			consoleLog::Log(ELogLevel::Info, "Mouse Position: ({}, {}), Mouse Delta: ({}, {})",
+				mousePos.X, mousePos.Y, mouseDelta.X, mouseDelta.Y);
+		}
+
+		processCameraInput(mInputSystemRef, mEditorViewportCamera, deltaTimeSec);
 	}
 
 	/* Rendering */
 	{
+		resizeWindow(mPendingResize[0], mPendingResize[1]);
+
 		mUiManager->BeginFrame();
 
 		const FVector2 viewportSize = mUiManager->GetViewportDisplaySize();
@@ -163,6 +246,29 @@ void FEditorEngine::End()
 	releaseManagers();
 
 	mbIsReleased = true;
+}
+
+void FEditorEngine::RequestResize(uint32 width, uint32 height)
+{
+	assert(width > 0 && height > 0);
+
+	mPendingResize[0] = width;
+	mPendingResize[1] = height;
+	bResizeRequested = true;
+}
+
+void FEditorEngine::resizeWindow(uint32 width, uint32 height)
+{
+	assert(mbIsInitialized);
+	assert(width > 0 && height > 0);
+
+	if (!bResizeRequested)
+	{
+		return;
+	}
+
+	mRenderer->ResizeSwapChain(width, height);
+	bResizeRequested = false;
 }
 
 void FEditorEngine::createManagers(HWND hWindow)

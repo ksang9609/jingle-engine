@@ -30,12 +30,17 @@ namespace RenderInterface {
 	class FPrimitiveRenderData
 }
 
+namespace Input {
+	class FInputSystem
+}
+
 EditorEngine *-- FEngineTimer
 EditorEngine *-- URenderer
 EditorEngine *-- FEditorUiManager
 EditorEngine *-- FSceneManager
 EditorEngine *-- FEditorViewport
 EditorEngine *-- FCamera
+EditorEngine --> FInputSystem : References
 
 EditorEngine ..> USceneComponent : Creates
 FSceneManager *-- USceneComponent

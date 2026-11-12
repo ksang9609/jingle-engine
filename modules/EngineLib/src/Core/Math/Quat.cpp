@@ -8,6 +8,7 @@
 
 #include "Core/Math/Rotator.h"
 #include "Core/Math/Vector.h"
+#include "Core/Math/MathUtils.h"
 
 const FQuat FQuat::Identity = FQuat(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -164,6 +165,14 @@ FQuat FQuat::MakeLookAtQuat(const FVector& eyePosition, const FVector& target, c
 {
 	const FVector forward = (target - eyePosition).GetNormalized();
 	return MakeLookDirectionQuat(forward, up);
+}
+
+FQuat FQuat::MakeFromAxisAngle(const FVector& axis, float angleDeg)
+{
+	NativeVector nativeAxis(axis.X, axis.Y, axis.Z);
+	return FQuat(
+		NativeQuaternion::CreateFromAxisAngle(
+			nativeAxis, FMath::DegreesToRadians(angleDeg)));
 }
 
 TResult<FQuat, FString> FQuat::tryMakeLookDirectionQuat(const FVector& forward, const FVector& up)

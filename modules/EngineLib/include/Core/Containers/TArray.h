@@ -1,4 +1,4 @@
-﻿
+
 #pragma once
 
 #include <cassert>
@@ -61,6 +61,8 @@ public:
 
 	T* GetData() { return mDatas.data(); }
 	const T* GetData() const { return mDatas.data(); }
+
+	void Swap(TArray<T>& other) { mDatas.swap(other.mDatas); }
 
 
 	/*
