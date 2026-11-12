@@ -250,7 +250,6 @@ void FEditorEngine::End()
 
 void FEditorEngine::RequestResize(uint32 width, uint32 height)
 {
-	assert(mbIsInitialized);
 	assert(width > 0 && height > 0);
 
 	mPendingResize[0] = width;

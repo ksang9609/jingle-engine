@@ -9,9 +9,14 @@ namespace
 {
 	// Global ??
 	FInputSystem GInputSystem;
+	FEditorEngine GEditorEngine(GInputSystem);
+
 	bool GbIsExit = false;
 
-	uint32 GPendingResize[2] = { 0, 0 }; // width, height
+	enum : UINT_PTR
+	{
+		RESIZE_TIMER_ID = 1,
+	};
 
 	void ProcessMessage(bool* outbIsExit)
 	{
@@ -51,7 +56,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		PostQuitMessage(0);
 		break;
 
-	// Defer input messages to the input system for processing later
+		// Defer input messages to the input system for processing later
 	case WM_KEYDOWN:
 	case WM_KEYUP:
 	case WM_LBUTTONDOWN:
@@ -94,10 +99,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_SIZE:
 		if (wParam != SIZE_MINIMIZED)
 		{
-			GPendingResize[0] = LOWORD(lParam);
-			GPendingResize[1] = HIWORD(lParam);
+			GEditorEngine.RequestResize(LOWORD(lParam), HIWORD(lParam));
 		}
 		return 0;
+
+	case WM_ENTERSIZEMOVE:
+		SetTimer(hWnd, RESIZE_TIMER_ID, 16, nullptr);
+		return 0;
+
+	case WM_EXITSIZEMOVE:
+		KillTimer(hWnd, RESIZE_TIMER_ID);
+		return 0;
+
+	case WM_TIMER:
+		if (wParam == RESIZE_TIMER_ID)
+		{
+			// Manually update the engine during window resizing 
+			// to avoid freezing the window.
+			GEditorEngine.Update();
+		}
 
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
@@ -139,10 +159,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return -1;
 	}
 
-	FEditorEngine editorEngine(GInputSystem);
+	GEditorEngine.Init(hWnd);
 
-	editorEngine.Init(hWnd);
-	
 	while (GbIsExit == false)
 	{
 		ProcessMessage(&GbIsExit);
@@ -152,15 +170,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			break;
 		}
 
-		editorEngine.RequestResize(GPendingResize[0], GPendingResize[1]);
-		if (!editorEngine.Update())
+		if (!GEditorEngine.Update())
 		{
 			break;
 		}
 	}
 
-	editorEngine.End();
-
+	GEditorEngine.End();
 
 	return 0;
 }
