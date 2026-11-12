@@ -107,6 +107,8 @@ FEditorEngine::FEditorEngine(FInputSystem& inputSystem)
 	, mEngineTimer(120) // target FPS
 	, mbIsInitialized(false)
 	, mbIsReleased(false)
+	, mPendingResize{ 0, 0 }
+	, bResizeRequested(false)
 {
 
 }
@@ -174,6 +176,8 @@ bool FEditorEngine::Update()
 
 	/* Rendering */
 	{
+		resizeWindow(mPendingResize[0], mPendingResize[1]);
+
 		mUiManager->BeginFrame();
 
 		const FVector2 viewportSize = mUiManager->GetViewportDisplaySize();
@@ -242,6 +246,30 @@ void FEditorEngine::End()
 	releaseManagers();
 
 	mbIsReleased = true;
+}
+
+void FEditorEngine::RequestResize(uint32 width, uint32 height)
+{
+	assert(mbIsInitialized);
+	assert(width > 0 && height > 0);
+
+	mPendingResize[0] = width;
+	mPendingResize[1] = height;
+	bResizeRequested = true;
+}
+
+void FEditorEngine::resizeWindow(uint32 width, uint32 height)
+{
+	assert(mbIsInitialized);
+	assert(width > 0 && height > 0);
+
+	if (!bResizeRequested)
+	{
+		return;
+	}
+
+	mRenderer->ResizeSwapChain(width, height);
+	bResizeRequested = false;
 }
 
 void FEditorEngine::createManagers(HWND hWindow)

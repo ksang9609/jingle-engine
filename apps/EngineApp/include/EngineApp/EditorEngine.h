@@ -26,6 +26,8 @@ public:
 	void Init(HWND hWindow);
 	bool Update();
 	void End();
+
+	void RequestResize(uint32 width, uint32 height);
 private:
 	void createManagers(HWND hWindow);
 	void releaseManagers();
@@ -36,6 +38,7 @@ private:
 		const FMatrix& viewProjectionMatirx // TODO: Set view projection matrix only once per frame
 	);
 	void renderPrimitive(EPrimitiveType primitiveType);
+	void resizeWindow(uint32 width, uint32 height);
 private:
 	/* References */
 	FInputSystem& mInputSystemRef;
@@ -59,4 +62,8 @@ private:
 	/* Internal States */
 	bool mbIsInitialized;
 	bool mbIsReleased;
+
+	/* Resize */
+	uint32 mPendingResize[2]; // width, height
+	bool bResizeRequested;
 };

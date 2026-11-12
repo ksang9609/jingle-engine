@@ -23,6 +23,8 @@ public:
 	URenderer(HWND hWindow);
 	~URenderer();
 	void Release();
+
+	void ResizeSwapChain(uint32 width, uint32 height);
 	
 	ID3D11Buffer* CreateVertexBuffer(const FVertexSimple* vertices, UINT byteWidth);
 	void ReleaseVertexBuffer(ID3D11Buffer& vertexBuffer);

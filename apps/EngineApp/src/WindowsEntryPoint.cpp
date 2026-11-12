@@ -11,6 +11,8 @@ namespace
 	FInputSystem GInputSystem;
 	bool GbIsExit = false;
 
+	uint32 GPendingResize[2] = { 0, 0 }; // width, height
+
 	void ProcessMessage(bool* outbIsExit)
 	{
 		assert(outbIsExit);
@@ -89,6 +91,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		GInputSystem.Defer({ hWnd, message, wParam, lParam });
 		return DefWindowProc(hWnd, message, wParam, lParam);
 
+	case WM_SIZE:
+		if (wParam != SIZE_MINIMIZED)
+		{
+			GPendingResize[0] = LOWORD(lParam);
+			GPendingResize[1] = HIWORD(lParam);
+		}
+		return 0;
+
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
@@ -142,6 +152,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			break;
 		}
 
+		editorEngine.RequestResize(GPendingResize[0], GPendingResize[1]);
 		if (!editorEngine.Update())
 		{
 			break;

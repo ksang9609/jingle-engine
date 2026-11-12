@@ -54,6 +54,23 @@ void URenderer::Release()
 	mIsReleased = true;
 }
 
+void URenderer::ResizeSwapChain(uint32 width, uint32 height)
+{
+	assert(mSwapChain);
+
+	mDeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
+	releaseFrameBuffer();
+	HRESULT hr = mSwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0);
+	if (FAILED(hr))
+	{
+		assert(false);
+		return;
+	}
+	createFrameBuffer();
+	mViewportInfo.Width = static_cast<float>(width);
+	mViewportInfo.Height = static_cast<float>(height);
+}
+
 ID3D11Buffer* URenderer::CreateVertexBuffer(const FVertexSimple* vertices, UINT byteWidth)
 {
 	D3D11_BUFFER_DESC bufferDesc = {
@@ -122,7 +139,7 @@ void URenderer::BindViewportRTV(
 	ID3D11DepthStencilView& viewportDSV,
 	float32 width,
 	float32 height
-	)
+)
 {
 	auto* viewportRTVRef = &viewportRTV;
 	auto* viewportDSVRef = &viewportDSV;
